@@ -103,9 +103,8 @@
           "start_byte": 0,
           "end_byte": 5261334937,
           "expected_size": 5261334938,
-          "status": "done",
+          "status": "pending",
           "artifact_name": "ck_sntefzzz_01",
-          "actual_size": 5261334938,
           "sha256": "a9a8daecd21ae244fb55b740333e3816641c93d7c2652d19d2fb35d94507fc92"
         },
         {
@@ -113,23 +112,52 @@
           "start_byte": 5261334938,
           "end_byte": 6639617871,
           "expected_size": 1378282934,
-          "status": "done",
+          "status": "pending",
           "artifact_name": "ck_sntefzzz_02",
-          "actual_size": 1378282934,
           "sha256": "54f948df53e79b715deb863dd267e6838fd8dbf8612c67762b6ac0a980a5be4c"
         }
       ],
-      "status": "gdrive_uploaded",
-      "gdrive_status": "uploaded"
+      "status": "downloading",
+      "gdrive_status": "pending"
+    },
+    {
+      "url": "https://mega.nz/file/lcVigYyS#NdgA5yZX4xaifv4WUB-6ivp3f9NsvnATR95O8s9d0oo",
+      "filename": "EPORNER.COM - [1Bpgy923jqC] QQ Elsa (2160).mp4",
+      "target_folder": "E-New",
+      "file_id": "lcVigYyS",
+      "total_size": 6168633497,
+      "total_chunks": 2,
+      "chunks": [
+        {
+          "index": 1,
+          "start_byte": 0,
+          "end_byte": 5261334937,
+          "expected_size": 5261334938,
+          "status": "done",
+          "artifact_name": "ck_lcvigyys_01",
+          "actual_size": 5261334938,
+          "sha256": "6d4d2dc080f61cb2a42af2f817004d8427ace80be1479c1569840c9983a8dae8"
+        },
+        {
+          "index": 2,
+          "start_byte": 5261334938,
+          "end_byte": 6168633496,
+          "expected_size": 907298559,
+          "status": "pending",
+          "artifact_name": "ck_lcvigyys_02"
+        }
+      ],
+      "status": "downloading",
+      "gdrive_status": "pending"
     }
   ],
   "current_index": 4,
   "version": 2,
   "summary": {
-    "total": 4,
-    "gdrive_uploaded": 1,
+    "total": 5,
+    "gdrive_uploaded": 0,
     "concat_ready": 0,
-    "downloading": 3,
+    "downloading": 5,
     "pending": 0,
     "status": "in_progress"
   }
