@@ -196,8 +196,10 @@ def ensure_gdrive_folder(folder_name):
         )
         if r.returncode != 0:
             log(f"  warning: rclone mkdir stderr: {r.stderr[:200]}")
-    except Exception:
-        log(f"  warning: rclone mkdir failed (non-fatal)")
+    except subprocess.TimeoutExpired:
+        log("  warning: rclone mkdir timed out (non-fatal)")
+    except Exception as e:
+        log(f"  warning: rclone mkdir failed: {str(e)[:100]} (non-fatal)")
 
 
 def upload_file(filepath, folder_name, quota_used=0, quota_max=0):
@@ -274,7 +276,9 @@ def upload_file(filepath, folder_name, quota_used=0, quota_max=0):
     log("")
 
     if process.returncode != 0:
-        raise RuntimeError(f"rclone copy exit {process.returncode}")
+        err_lines = [l.strip() for l in collected if l.strip() and not l.strip().startswith('{')]
+        err_detail = err_lines[-3:] if err_lines else []
+        raise RuntimeError(f"rclone copy exit {process.returncode}: {chr(59).join(err_detail)}")
     return os.path.basename(filepath)
 
 
@@ -301,13 +305,14 @@ def main():
     conf_dir = os.path.expanduser("~/.config/rclone")
     conf_path = os.path.join(conf_dir, "rclone.conf")
     os.makedirs(conf_dir, exist_ok=True)
-    if not os.path.exists(conf_path):
-        if not RCLONE_CONF_RAW:
-            log("ERROR: RCLONE_CONF secret is empty")
-            sys.exit(1)
-        with open(conf_path, "w") as f:
-            f.write(RCLONE_CONF_RAW)
-        log("  rclone.conf written")
+    if not RCLONE_CONF_RAW:
+        log("ERROR: RCLONE_CONF secret is empty")
+        sys.exit(1)
+    with open(conf_path, "w") as f:
+        f.write(RCLONE_CONF_RAW)
+    log("  rclone.conf written")
+    r = subprocess.run(["rclone", "listremotes"], capture_output=True, text=True, timeout=10)
+    log(f"  rclone remotes: {r.stdout.strip() or '(none)'}")
 
     # Load artifact state
     state = load_completed()
