@@ -7,8 +7,8 @@
     },
     "Small text": {
       "total": 1,
-      "done": 0,
-      "status": "active"
+      "done": 1,
+      "status": "completed"
     }
   },
   "completed": [
@@ -20,9 +20,17 @@
       "completed_at": "2026-07-20T07:45:07Z",
       "status": "uploaded",
       "oversized": true
+    },
+    {
+      "url": "https://mega.nz/file/1VMgjCAA#0ZVHVi0MdfFqhoReMyB7hYdeLJ8Xo7r3O1p3UtCthwo",
+      "filename": "65 Tongue Out Cum Shots T O M O Ep 1 - Elsa Jean PornMedium com.mp4",
+      "size": 327548782,
+      "target_folder": "Small text",
+      "completed_at": "2026-07-20T07:47:47Z",
+      "status": "uploaded"
     }
   ],
-  "current_folder": "Small text",
+  "current_folder": null,
   "oversized": {
     "total": 0,
     "done": 0,
