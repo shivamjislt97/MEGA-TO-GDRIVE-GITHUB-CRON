@@ -852,10 +852,11 @@ def main():
 
     completed_state = load_completed()
     unupload_items = get_unupload_items(completed_state)
-    total_sz = len(unupload_items)
-    done_sz = sum(1 for item in completed_state.get("completed", []) if item.get("status") == "uploaded" and item.get("oversized"))
+    total_unupload = len(unupload_items)
+    total_oversized = sum(1 for item in completed_state.get("completed", []) if item.get("oversized"))
+    done_oversized = sum(1 for item in completed_state.get("completed", []) if item.get("status") == "uploaded" and item.get("oversized"))
 
-    if total_sz == 0 and done_sz == 0:
+    if total_unupload == 0 and done_oversized == 0:
         log("  No oversized videos to process.")
         ch_state = load_chunks_history()
         if ch_state:
@@ -864,8 +865,7 @@ def main():
                 if v.get("status") in ("downloading", "concat_ready")
             )
             if remaining > 0:
-                log(f"  But chunks_history has {remaining} in-progress videos — continuing processing")
-                # Don't return! Fall through to process in-progress chunks
+                log(f"  But chunks_history has {remaining} in-progress videos - continuing processing")
             else:
                 log("  All oversized videos completed!")
                 print_summary(completed_state)
@@ -874,7 +874,7 @@ def main():
             print_summary(completed_state)
             return
 
-    if total_sz > 0 and done_sz == total_sz:
+    if total_unupload == 0 or (total_oversized > 0 and done_oversized == total_oversized):
         log("  All oversized videos already uploaded to GDrive!")
         print_summary(completed_state)
         return
