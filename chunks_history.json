@@ -13,9 +13,8 @@
           "start_byte": 0,
           "end_byte": 4831838207,
           "expected_size": 4831838208,
-          "status": "done",
+          "status": "pending",
           "artifact_name": "ck_4iubvq5k_01",
-          "actual_size": 4831838208,
           "sha256": "a3ed766507d89f8d95ca80becf3d12a0b4cbb748ab1430144bc69377514e7318"
         },
         {
@@ -23,13 +22,12 @@
           "start_byte": 4831838208,
           "end_byte": 5510200889,
           "expected_size": 678362682,
-          "status": "done",
+          "status": "pending",
           "artifact_name": "ck_4iubvq5k_02",
-          "actual_size": 678362682,
           "sha256": "a6e7093ff25bca281900ace8652ca2604184915c0beb7d85861cae7797aee6ea"
         }
       ],
-      "status": "gdrive_uploaded",
+      "status": "downloading",
       "gdrive_status": "uploaded"
     },
     {
@@ -45,8 +43,10 @@
           "start_byte": 0,
           "end_byte": 4831838207,
           "expected_size": 4831838208,
-          "status": "pending",
-          "artifact_name": "ck_cqcxhb4a_01"
+          "status": "done",
+          "artifact_name": "ck_cqcxhb4a_01",
+          "actual_size": 4831838208,
+          "sha256": "848020f47700b84076c139c8655dd93fc91ade7b2198105c42a6a30917717ab9"
         },
         {
           "index": 2,
@@ -57,7 +57,7 @@
           "artifact_name": "ck_cqcxhb4a_02"
         }
       ],
-      "status": "pending",
+      "status": "downloading",
       "gdrive_status": "pending"
     }
   ],
@@ -67,8 +67,8 @@
     "total": 2,
     "gdrive_uploaded": 1,
     "concat_ready": 0,
-    "downloading": 0,
-    "pending": 1,
+    "downloading": 1,
+    "pending": 0,
     "status": "in_progress"
   }
 }
