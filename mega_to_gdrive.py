@@ -206,7 +206,7 @@ def upload_file(filepath, folder_name, quota_used=0, quota_max=0):
     target = f"{GDRIVE_REMOTE}:{BASE_FOLDER}/{folder_name}/"
 
     process = subprocess.Popen(
-        ["rclone", "copy", filepath, target],
+        ["rclone", "copy", filepath, target, "--stats=2s"],
         stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
         text=True, bufsize=1
     )
@@ -235,36 +235,25 @@ def upload_file(filepath, folder_name, quota_used=0, quota_max=0):
             now = time.time()
             if collected:
                 line = collected.pop(0).strip().replace("\r", "")
-                if not line or not line.startswith("{"):
+                if not line:
                     continue
-                try:
-                    d = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-                total = d.get("totalBytes", 0) or 1
-                transferred = d.get("bytes", 0)
-                speed = d.get("speed", 0)
-                eta_sec = d.get("eta", 0)
-                if eta_sec < 0:
-                    eta_sec = 0
-                pct = min(round(transferred * 100 / total), 100)
-                t = fmt_size(transferred)
-                total_str = fmt_size(total)
-                spd = fmt_size(speed) + "/s"
-                eta_h = eta_sec // 3600
-                eta_m = (eta_sec % 3600) // 60
-                eta_s = eta_sec % 60
-                eta_str = f"{eta_h}h{eta_m:02d}m{eta_s:02d}s" if eta_h else f"{eta_m:02d}m{eta_s:02d}s"
-                q_str = fmt_size(quota_used + transferred)
-                line_text = f"  [UPLOAD] {t} / {total_str} ({pct}%) @ {spd} ETA {eta_str} | Quota: {q_str}/{fmt_size(quota_max)}"
-                if line_text != last_line:
-                    log(line_text, end='\r')
-                    last_line = line_text
+                # Parse rclone text output: "Transferred:   1.2 GiB / 2.8 GiB, 43%, 34.5 MiB/s, ETA 45s"
+                m = re.search(r'Transferred:\s+([\d.]+\s*\w+)\s*/\s*([\d.]+\s*\w+),\s*(\d+)%,\s*([\d.]+\s*\w+/s),\s*ETA\s+(\S+)', line)
+                if m:
+                    transferred_str = m.group(1)
+                    total_str = m.group(2)
+                    pct = int(m.group(3))
+                    speed_str = m.group(4)
+                    eta_str = m.group(5)
+                    line_text = f"  [UPLOAD] {transferred_str} / {total_str} ({pct}%) @ {speed_str} ETA {eta_str}"
+                    if line_text != last_line:
+                        log(line_text, end='\r')
+                        last_line = line_text
             else:
                 elapsed = int(now - start_time)
                 if elapsed > 0 and elapsed % 10 == 0:
                     log(f"  [UPLOAD] waiting... ({elapsed}s elapsed)", end='\r')
-            time.sleep(0.1)
+            time.sleep(0.5)
 
         process.wait(timeout=3600)
     except subprocess.TimeoutExpired:

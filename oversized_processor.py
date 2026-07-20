@@ -466,7 +466,7 @@ def upload_to_gdrive(filepath, target_folder):
     total = os.path.getsize(filepath)
     log(f"  Uploading {os.path.basename(filepath)} ({fmt_size(total)}) to GDrive...")
     proc = subprocess.Popen(
-        ["rclone", "copy", filepath, target],
+        ["rclone", "copy", filepath, target, "--stats=2s"],
         stderr=subprocess.PIPE, stdout=subprocess.DEVNULL, text=True, bufsize=1
     )
     collected = []
@@ -474,25 +474,26 @@ def upload_to_gdrive(filepath, target_folder):
     reader.start()
     last_log = 0
     start_time = time.time()
+    last_line = ""
     while reader.is_alive():
         now = time.time()
         if collected:
             line = collected.pop(0).strip().replace("\r", "")
             if not line:
                 continue
-            parsed = _parse_rclone_json(line)
-            if parsed:
-                t = fmt_size(parsed["transferred"])
-                total_str = fmt_size(parsed["total"])
-                pct = parsed["percent"]
-                spd = fmt_size(parsed["speed"]) + "/s"
-                eta = parsed["eta_sec"]
-                eta_h = eta // 3600
-                eta_m = (eta % 3600) // 60
-                eta_s = eta % 60
-                eta_str = f"{eta_h}h{eta_m:02d}m{eta_s:02d}s" if eta_h else f"{eta_m:02d}m{eta_s:02d}s"
-                log(f"  [UPLOAD] {t} / {total_str} ({pct}%) @ {spd} ETA {eta_str}", end="\r")
-                last_log = now
+            # Parse rclone text output: "Transferred:   1.2 GiB / 2.8 GiB, 43%, 34.5 MiB/s, ETA 45s"
+            m = re.search(r'Transferred:\s+([\d.]+\s*\w+)\s*/\s*([\d.]+\s*\w+),\s*(\d+)%,\s*([\d.]+\s*\w+/s),\s*ETA\s+(\S+)', line)
+            if m:
+                transferred_str = m.group(1)
+                total_str = m.group(2)
+                pct = int(m.group(3))
+                speed_str = m.group(4)
+                eta_str = m.group(5)
+                line_text = f"  [UPLOAD] {transferred_str} / {total_str} ({pct}%) @ {speed_str} ETA {eta_str}"
+                if line_text != last_line:
+                    log(line_text, end="\r")
+                    last_line = line_text
+                    last_log = now
             elif now - last_log >= 5:
                 log(f"  [UPLOAD] {line[:100]}", end="\r")
                 last_log = now
@@ -501,7 +502,7 @@ def upload_to_gdrive(filepath, target_folder):
             if elapsed > 0 and now - last_log >= 5:
                 log(f"  [UPLOAD] waiting... ({elapsed}s elapsed)", end="\r")
                 last_log = now
-        time.sleep(0.1)
+        time.sleep(0.5)
     proc.wait(timeout=3600)
     log("")
     if proc.returncode != 0:
