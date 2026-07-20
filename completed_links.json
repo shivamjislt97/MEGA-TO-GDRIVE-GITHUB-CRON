@@ -2,13 +2,13 @@
   "folders": {
     "Test": {
       "total": 1,
-      "done": 0,
-      "status": "active"
+      "done": 1,
+      "status": "completed"
     },
     "Small text": {
       "total": 1,
       "done": 0,
-      "status": "pending"
+      "status": "active"
     }
   },
   "completed": [
@@ -17,12 +17,12 @@
       "filename": "EPORNER.COM - [Lbv99HWpOEf] Great Days - EJ (2160).mp4",
       "size": 6436939029,
       "target_folder": "Test",
-      "completed_at": "2026-07-20T07:08:45Z",
-      "status": "unupload",
+      "completed_at": "2026-07-20T07:45:07Z",
+      "status": "uploaded",
       "oversized": true
     }
   ],
-  "current_folder": "Test",
+  "current_folder": "Small text",
   "oversized": {
     "total": 0,
     "done": 0,
