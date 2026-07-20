@@ -1,0 +1,72 @@
+{
+  "videos": [
+    {
+      "url": "https://mega.nz/file/4IUBVQ5K#4A3_h8hDngA4VqWlyXI9JhgM9xy-q3zH6zuEZgN3Moc",
+      "filename": "EPORNER.COM - [XwMuIf54eOp] Eggs Benedick (2160).mp4",
+      "target_folder": "7",
+      "file_id": "4IUBVQ5K",
+      "total_size": 5510200890,
+      "total_chunks": 2,
+      "chunks": [
+        {
+          "index": 1,
+          "start_byte": 0,
+          "end_byte": 4831838207,
+          "expected_size": 4831838208,
+          "status": "done",
+          "artifact_name": "ck_4iubvq5k_01",
+          "actual_size": 4831838208,
+          "sha256": "a3ed766507d89f8d95ca80becf3d12a0b4cbb748ab1430144bc69377514e7318"
+        },
+        {
+          "index": 2,
+          "start_byte": 4831838208,
+          "end_byte": 5510200889,
+          "expected_size": 678362682,
+          "status": "pending",
+          "artifact_name": "ck_4iubvq5k_02"
+        }
+      ],
+      "status": "downloading",
+      "gdrive_status": "pending"
+    },
+    {
+      "url": "https://mega.nz/file/cQcxHb4A#9F3R4X9slO6L4LyTxpkRByUhtXCZ2NRWrwYtGU2iOAc",
+      "filename": "EPORNER.COM - [dKCtvQbjxjO] Elsa Jean Blacked (2160).mp4",
+      "target_folder": "7",
+      "file_id": "cQcxHb4A",
+      "total_size": 5441127511,
+      "total_chunks": 2,
+      "chunks": [
+        {
+          "index": 1,
+          "start_byte": 0,
+          "end_byte": 4831838207,
+          "expected_size": 4831838208,
+          "status": "pending",
+          "artifact_name": "ck_cqcxhb4a_01"
+        },
+        {
+          "index": 2,
+          "start_byte": 4831838208,
+          "end_byte": 5441127510,
+          "expected_size": 609289303,
+          "status": "pending",
+          "artifact_name": "ck_cqcxhb4a_02"
+        }
+      ],
+      "status": "pending",
+      "gdrive_status": "pending"
+    }
+  ],
+  "current_index": 0,
+  "version": 2,
+  "summary": {
+    "total": 2,
+    "gdrive_uploaded": 0,
+    "concat_ready": 0,
+    "downloading": 1,
+    "pending": 1,
+    "status": "in_progress"
+  }
+}
