@@ -32,13 +32,13 @@
     },
     "7": {
       "total": 4,
-      "done": 3,
-      "status": "active"
+      "done": 4,
+      "status": "completed"
     },
     "8": {
       "total": 5,
       "done": 0,
-      "status": "pending"
+      "status": "active"
     },
     "Bts Interview": {
       "total": 3,
@@ -1437,8 +1437,8 @@
       "filename": "EPORNER.COM - [dKCtvQbjxjO] Elsa Jean Blacked (2160).mp4",
       "size": 5441127511,
       "target_folder": "7",
-      "completed_at": "2026-07-20T14:42:57Z",
-      "status": "unupload",
+      "completed_at": "2026-07-20T20:01:38Z",
+      "status": "uploaded",
       "oversized": true
     },
     {
@@ -1450,7 +1450,7 @@
       "status": "uploaded"
     }
   ],
-  "current_folder": "7",
+  "current_folder": "8",
   "oversized": {
     "total": 0,
     "done": 0,
