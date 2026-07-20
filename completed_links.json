@@ -2,13 +2,13 @@
   "folders": {
     "10": {
       "total": 4,
-      "done": 3,
-      "status": "active"
+      "done": 4,
+      "status": "completed"
     },
     "1080p quality": {
       "total": 7,
       "done": 0,
-      "status": "pending"
+      "status": "active"
     },
     "11": {
       "total": 5,
@@ -190,9 +190,17 @@
       "target_folder": "10",
       "completed_at": "2026-07-20T08:35:54Z",
       "status": "uploaded"
+    },
+    {
+      "url": "https://mega.nz/file/QNs1EIIK#HP2fr_UjNiXp6zMCzZJvU5XI67Lcma3iusQsrzqoNR8",
+      "filename": "EPORNER.COM - [en8jALSc4NN] Elsa Too Big (2160).mp4",
+      "size": 4635297833,
+      "target_folder": "10",
+      "completed_at": "2026-07-20T08:47:37Z",
+      "status": "uploaded"
     }
   ],
-  "current_folder": "10",
+  "current_folder": "1080p quality",
   "oversized": {
     "total": 0,
     "done": 0,
