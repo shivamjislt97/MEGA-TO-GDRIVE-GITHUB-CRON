@@ -206,7 +206,7 @@ def upload_file(filepath, folder_name, quota_used=0, quota_max=0):
     target = f"{GDRIVE_REMOTE}:{BASE_FOLDER}/{folder_name}/"
 
     process = subprocess.Popen(
-        ["rclone", "copy", filepath, target, "--stats=3s", "--stats-one-line-json"],
+        ["rclone", "copy", filepath, target, "--stats=3s", "--stats-json"],
         stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
         text=True, bufsize=1
     )

@@ -1,5 +1,7 @@
 import json, subprocess, sys, time
 
+MAX_NO_PROGRESS_RUNS = 3
+
 try:
     d = json.load(open('completed_links.json'))
 except Exception:
@@ -11,18 +13,16 @@ all_done = True
 remaining = 0
 
 # Check normal folders
-for name, f in folders.items():
-    total = f.get('total', 0)
-    done = f.get('done', 0)
-    oversized_count = f.get('oversized_count', 0)
-    status = f.get('status', 'pending')
-    effective_done = done + oversized_count
-    if status != 'completed' or effective_done < total:
+for name, fdata in folders.items():
+    total = fdata.get('total', 0)
+    done = fdata.get('done', 0)
+    status = fdata.get('status', 'pending')
+    if status != 'completed' or done < total:
         all_done = False
-        remaining += total - effective_done
-        print(f'  [{name}] {done}/{total} (ov:{oversized_count}) ({status})', file=sys.stderr)
+        remaining += total - done
+        print(f'  [{name}] {done}/{total} ({status})', file=sys.stderr)
 
-# Check oversized (structured format) — only if not already marked completed
+# Check oversized (structured format)
 if isinstance(oversized_raw, dict):
     ov = oversized_raw
     total = ov.get('total', 0)
@@ -33,15 +33,13 @@ if isinstance(oversized_raw, dict):
         remaining += total - done
         print(f'  [OVERSIZED] {done}/{total} uploaded | status: {status}', file=sys.stderr)
 elif isinstance(oversized_raw, list):
-    # legacy flat array — count items as remaining
     for ov in oversized_raw:
         all_done = False
         remaining += 1
-        print(f'  [OVERSIZED] {ov.get("filename", "?")} ({ov.get("target_folder", "?")})', file=sys.stderr)
     if oversized_raw:
         print(f'  [HINT] Next run will migrate oversized to structured format', file=sys.stderr)
 
-# Also check chunks_history for in-progress oversized — only if not already completed
+# Also check chunks_history for in-progress oversized
 try:
     ch = json.load(open('chunks_history.json'))
     for v in ch.get('videos', []):
@@ -49,6 +47,34 @@ try:
             all_done = False
 except Exception:
     pass
+
+# --- Progress tracking to prevent infinite loops ---
+PROGRESS_FILE = '.auto_trigger_progress'
+uploaded_count = sum(1 for item in d.get('completed', []) if item.get('status') == 'uploaded')
+
+try:
+    prev = json.load(open(PROGRESS_FILE))
+    prev_uploaded = prev.get('uploaded_count', 0)
+    no_progress_count = prev.get('no_progress_count', 0)
+except Exception:
+    prev_uploaded = 0
+    no_progress_count = 0
+
+if uploaded_count > prev_uploaded:
+    no_progress_count = 0
+else:
+    no_progress_count += 1
+
+try:
+    with open(PROGRESS_FILE, 'w') as f:
+        json.dump({'uploaded_count': uploaded_count, 'no_progress_count': no_progress_count}, f)
+except Exception:
+    pass
+
+# Stop re-triggering if no progress for too many runs (but only if we've uploaded something before)
+if no_progress_count >= MAX_NO_PROGRESS_RUNS and uploaded_count > 0:
+    print(f'STOPPED: No progress for {no_progress_count} runs ({uploaded_count} uploaded). Fix rclone config/MEGA connectivity.')
+    sys.exit(0)
 
 if remaining > 0:
     max_attempts = 3
@@ -58,7 +84,7 @@ if remaining > 0:
             capture_output=True, text=True
         )
         if r.returncode == 0:
-            print(f'Triggered next cycle ({remaining} files remaining)')
+            print(f'Triggered next cycle ({remaining} remaining, no_progress={no_progress_count})')
             break
         print(f'Attempt {attempt+1}/{max_attempts} failed: {r.stderr.strip()}')
         if attempt < max_attempts - 1:
@@ -67,6 +93,6 @@ if remaining > 0:
         print('All trigger attempts failed')
         sys.exit(1)
 elif folders and all_done:
-    print('All folders completed — no more cycles')
+    print('All folders completed - no more cycles')
 else:
-    print('No pending work — no more cycles')
+    print('No pending work - no more cycles')
