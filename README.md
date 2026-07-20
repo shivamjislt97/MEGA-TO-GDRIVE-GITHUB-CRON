@@ -1,41 +1,41 @@
 # MEGA to Google Drive Transfer
 
-Multi-folder file transfer system from MEGA to Google Drive using GitHub Actions. Uses **artifact-based state tracking** to survive crashes, **smart quota management** to handle MEGA's 5GB/day bandwidth limit, and an **oversized processor** that chunks files >5GB across multiple runs with AES-128-CTR decryption and ffprobe verification.
+Multi-folder file transfer system from MEGA to Google Drive using GitHub Actions. Uses **git-based state tracking** to survive crashes, **smart quota management** to handle MEGA's 5GB/day bandwidth limit, and an **oversized processor** that chunks files >5GB across multiple runs with AES-128-CTR decryption and ffprobe verification.
 
 ---
 
-## 🔑 Required GitHub Secrets (Pehle Ye Samjho)
+## Required GitHub Secrets
 
 Workflow chalane ke liye **3 GitHub Secrets** banane padenge. Inke bina workflow fail hoga.
 
 | Secret Name | Required? | Kya Hai? | Kaise Milega? |
 |-------------|-----------|----------|---------------|
-| `MEGA_LINKS` | ✅ Required | Aapki MEGA files ka JSON — `{"Folder":["url1","url2"]}` | **Web Tool se banao** (neeche link hai) ya manually |
-| `RCLONE_CONF` | ✅ Required | rclone config file content | `rclone config show gdrive` command se |
-| `GH_PAT` | ✅ Required | GitHub Personal Access Token | GitHub → Settings → Developer settings → Personal access tokens |
+| `MEGA_LINKS` | Required | Aapki MEGA files ka JSON — `{"Folder":["url1","url2"]}` | **Web Tool se banao** (neeche link hai) ya manually |
+| `RCLONE_CONF` | Required | rclone config file content | `rclone config show gdrive` command se |
+| `GH_PAT` | Required | GitHub Personal Access Token | GitHub → Settings → Developer settings → Personal access tokens |
 
-> ⚠️ **Important:** `GH_PAT` token ke liye **`repo`** aur **`workflow`** permissions select karna zaroori hai.
+> **Important:** `GH_PAT` token ke liye **`repo`** aur **`workflow`** permissions select karna zaroori hai.
 
-### 🛠️ MEGA_LINKS Banane Ka Easy Tarika
+### MEGA_LINKS Banane Ka Easy Tarika
 
 Manual JSON banana mushkil hai. Isliye yeh **free web tool** bana diya hai:
 
-🔗 **[https://megajsonlinksgenerator-kappa.vercel.app/](https://megajsonlinksgenerator-kappa.vercel.app/)**
+**[https://megajsonlinksgenerator-kappa.vercel.app/](https://megajsonlinksgenerator-kappa.vercel.app/)**
 
 **Kaise use karein:**
 1. Link kholo — **Folder Name** daalo (e.g. "Movies")
 2. **MEGA links** paste karo textarea mein (har line par ek URL)
 3. **"+ Add Folder"** click karo
 4. Jitne folders chahein utne add karo
-5. **"🚀 Generate Secret"** click karo — minified JSON ban jayega
-6. **📋 Copy** karo → GitHub Secret `MEGA_LINKS` mein paste karo
-7. **(Bonus)** **🔄 Reset State** — `{"folders": {}}` copy karein → `completed_links.json` reset karne ke liye
+5. **"Generate Secret"** click karo — minified JSON ban jayega
+6. **Copy** karo → GitHub Secret `MEGA_LINKS` mein paste karo
+7. **(Bonus)** **Reset State** — `{"folders": {}}` copy karein → `completed_links.json` reset karne ke liye
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
-- [Required Secrets](#-required-github-secrets-pehle-ye-samjho)
+- [Required Secrets](#required-github-secrets)
 - [How It Works](#how-it-works)
 - [Oversized Video Processing](#oversized-video-processing)
 - [Complete Flow Diagram](#complete-flow-diagram)
@@ -62,27 +62,28 @@ MEGA free accounts have a **~5GB daily download quota**. GitHub Actions runners 
 
 ### The Solution
 
-Instead of scanning GDrive every run (slow, 10-30 sec), we use **GitHub Artifacts** + **git** to maintain a persistent `completed_links.json` file that tracks:
+We use **git** to maintain a persistent `completed_links.json` file that tracks:
 
 - Which **files** are already uploaded (per URL)
 - Which **folders** are active/completed/pending
 - Which **folder** is currently being processed
-- Which **oversized files** (>5GB) need manual handling
+- Which **oversized files** (>5GB) need chunked handling
 
-### Key Changes from v1
+State is saved to git after each folder completion or run end. GitHub Actions Artifacts are used as backup for `completed_links.json` and for storing oversized chunk `.bin` files across runs.
 
-| Change | Old Way | New Way |
-|--------|---------|---------|
-| **Metadata fetch** | `megadl --info` (CLI flag unsupported in older versions) | `mega.py` Python library (`get_public_url_info()`) |
-| **Download** | `mega.py` (`download_url()`) — hangs indefinitely on broken links | `megadl --path` only — with 600s timeout, no progress spam |
-| **Upload verify** | `rclone lsjson` check after upload (could timeout/crash) | No verify — upload directly marks complete. Upload always succeeds or raises error |
-| **State save** | End of workflow via artifact + git | **Per-file git push** — har file ke baad immediate commit+push to repo |
-| **Auto-trigger** | Always runs (even on cancellation) | Only on `success()` or `failure()`, not on cancellation |
-| **Inline Python** | Inline `python -c "..."` in YAML (broke YAML parsing) | Standalone `auto_trigger.py` file |
-| **Python compat** | — | `asyncio.coroutine` fallback for Python 3.12+ |
-| **Schedule** | Cron every 5 minutes | Cron `*/15 * * * *` + auto-trigger (dual mechanism) |
-| **Source of links** | Uses `MEGA_LINKS_merged.json` from repo file | Reads `MEGA_LINKS` **GitHub Secret** — updating repo file has no effect |
-| **Download logging** | Raw megadl progress lines printed | Clean `DOWNLOADING...` / `Downloaded: X MB in Ys` — no megadl spam |
+### Key Design
+
+| Aspect | How It Works |
+|--------|-------------|
+| **Metadata fetch** | `megadl --info` first (CLI, fast). Falls back to `mega.py` Python library (`get_public_url_info()`) if megadl fails |
+| **Download** | `megadl --path` only — with 600s timeout. `mega.py` `download_url()` removed (hangs on broken links) |
+| **Upload verify** | No post-upload verify — rclone copy always succeeds or raises error. Upload failure → skip to next file |
+| **State save** | Git commit + push at **run end** and **folder completion** (not per-file). Artifact uploaded as backup |
+| **Auto-trigger** | Only on `success()` or `failure()`, not on cancellation. `auto_trigger.py` calls `gh workflow run` if files remain |
+| **Inline Python** | Standalone `auto_trigger.py` file (not inline `python -c` in YAML) |
+| **Schedule** | Cron `*/15 * * * *` + auto-trigger (dual mechanism) |
+| **Source of links** | Reads `MEGA_LINKS` **GitHub Secret** — updating repo file `MEGA_LINKS_merged.json` has no effect |
+| **Download logging** | Clean `DOWNLOADING...` / `Downloaded: X MB in Ys` — megadl stdout captured but not printed |
 
 ---
 
@@ -100,27 +101,27 @@ The oversized processor (`oversized_processor.py`) splits large files into 4.5 G
 
 ```
 MEGA CDN            GitHub Artifact          Local VM             Google Drive
-encrypted bytes ──▶ chunk_01.enc              chunk_01.bin ──┐
-                    (stored 90 days)   ──▶    (decrypted)    │
-                                        ──▶  SHA256 stored   │
-                                                            ├──▶ concat ▶ ffprobe ✓ ▶ upload
-MEGA CDN            GitHub Artifact          chunk_02.bin ──┘
-encrypted bytes ──▶ chunk_02.enc              (decrypted)
+encrypted bytes --> chunk_01.enc              chunk_01.bin --+-->
+                    (stored 90 days)   -->    (decrypted)    |
+                                        -->  SHA256 stored   |
+                                                            +--> concat > ffprobe > upload
+MEGA CDN            GitHub Artifact          chunk_02.bin --+
+encrypted bytes --> chunk_02.enc              (decrypted)
 ```
 
 ### Step-by-Step
 
 | Step | What Happens | File |
 |------|-------------|------|
-| **1. Detect oversized** | `mega_to_gdrive.py` checks if file >5GB, moves it to `oversized` list in `completed_links.json` | `mega_to_gdrive.py` |
-| **2. Initialize chunks** | On first run, `oversized_processor.py` parses the MEGA URL, extracts file ID + key, calculates chunk boundaries, creates `chunks_history.json` | `oversized_processor.py` |
-| **3. Download chunk** | Fetches raw encrypted bytes from MEGA CDN via `curl` with `Range:` header → decrypts with `openssl aes-128-ctr` → saves as `.bin` → computes SHA256 | `download_chunk()` |
+| **1. Detect oversized** | `mega_to_gdrive.py` checks if file >5GB, adds to `completed[]` array with `status:"unupload"` and `oversized:true` | `mega_to_gdrive.py` |
+| **2. Initialize chunks** | On first run, `oversized_processor.py` finds `status:"unupload"` items, parses MEGA URLs, extracts file ID + key, calculates chunk boundaries, creates `chunks_history.json` | `oversized_processor.py` |
+| **3. Download chunk** | Fetches raw encrypted bytes from MEGA CDN via `urllib` with `Range:` header, decrypts with `openssl aes-128-ctr`, saves as `.bin`, computes SHA256 | `download_chunk()` |
 | **4. Upload artifact** | Workflow uploads the `.bin` file as a GitHub Artifact (retention: 90 days) | `.github/workflows/mega_gdrive_transfer.yml` |
 | **5. Repeat** | Each run processes one chunk per video. Auto-trigger queues next run until all chunks downloaded | `process_chunk_download()` |
 | **6. Concat** | Once all chunks are `done`, downloads all artifacts, verifies SHA256 of each, concatenates in order, saves final video | `process_concat_run()` |
-| **7. ffprobe check** | Runs `ffprobe -v error -show_entries format=duration` on the concatenated file. If ffprobe rejects it → chunks reset to `pending`, artifacts deleted, re-download | `process_concat_run()` |
-| **8. Upload to GDrive** | rclone copies the final video to Google Drive. On success → artifacts deleted, `completed_links.json` updated | `upload_to_gdrive()` |
-| **9. Cleanup** | Chunk artifacts deleted from GitHub, local temp files removed, video marked `gdrive_uploaded` in both state files | `delete_artifact()` |
+| **7. ffprobe check** | Runs `ffprobe -v error -show_entries format=duration` on the concatenated file. If ffprobe rejects it, chunks reset to `pending`, artifacts deleted, re-download | `process_concat_run()` |
+| **8. Upload to GDrive** | rclone copies the final video to Google Drive. On success, artifacts deleted, `completed_links.json` entry updated from `"unupload"` to `"uploaded"` | `upload_to_gdrive()` |
+| **9. Cleanup** | Chunk artifacts deleted from GitHub, local temp files removed, video marked uploaded in state files | `delete_artifact()` |
 
 ### Key Design Decisions
 
@@ -128,18 +129,18 @@ encrypted bytes ──▶ chunk_02.enc              (decrypted)
 |----------|-----|
 | **4.5 GB chunk size** (`CHUNK_MAX = 4831838208`) | Safe margin under 5GB MEGA quota limit per run |
 | **AES-128-CTR** | MEGA uses AES-128-CTR for file data (not CBC). CBC is only for metadata attribute decryption |
-| **Range requests** | `curl -r start-end` fetches only the chunk's byte range from MEGA CDN — no need to download entire 6GB file |
+| **Range requests** | `urllib` with `Range:` header fetches only the chunk's byte range from MEGA CDN — no need to download entire file |
 | **SHA256 per chunk** | Stored in `chunks_history.json` when chunk is downloaded. Verified again before concat to detect artifact corruption |
-| **ffprobe gate** | Upload only happens if ffprobe can read the concatenated file. If it fails → data corruption → auto-retry |
+| **ffprobe gate** | Upload only happens if ffprobe can read the concatenated file. If it fails, data corruption is assumed and auto-retry happens |
 | **Per-chunk artifact** | Each chunk uploaded as a separate GitHub Artifact (named `ck_{fileid}_{index}`). Survives across workflow runs (90 day retention) |
 | **Real-time progress** | Every 2 seconds: `[DOWNLOAD] X MB / Y MB (Z%) @ W MB/s` during chunk download. `[CONCAT] [i/n] X GB / Y GB (Z%)` during concat. `[UPLOAD]` from rclone stats |
-| **PROCESSOR_VERSION** | If key derivation logic changes (e.g., XOR grouping fix), old chunks are auto-detected and deleted; all chunks re-downloaded with new logic |
+| **PROCESSOR_VERSION** | If key derivation logic changes, old chunks are auto-detected and deleted; all chunks re-downloaded with new logic |
 
 ### State Files
 
 Two files track oversized progress:
 
-1. **`completed_links.json`** — `oversized` section: `total`, `done`, `status`, `items[]` with per-video `gdrive_status` (`pending` → `downloading` → `uploaded`)
+1. **`completed_links.json`** — `completed[]` array contains oversized items with `status:"unupload"`, `oversized:true`. After upload, status changes to `"uploaded"`
 2. **`chunks_history.json`** — Per-video: file ID, total size, chunk list (each with `index`, `start_byte`, `end_byte`, `status`, `artifact_name`, `sha256`), overall `summary`
 
 Both files are committed to git after every meaningful state change (per-chunk, per-concat, per-upload).
@@ -149,68 +150,80 @@ Both files are committed to git after every meaningful state change (per-chunk, 
 ### Main Workflow (Top-Level View)
 
 ```
-    ┌──────────────────────────────────────────┐
-    │    MANUAL TRIGGER or AUTO-TRIGGER        │
-    │    (Cron */15 + auto-trigger)                │
-    └─────────────────┬────────────────────────┘
-                      │ Trigger
-                      ▼
-    ┌──────────────────────────────────────────┐
-    │  PHASE 1: SETUP                          │
-    │  Install megatools + rclone + Python     │
-    │  pip install mega.py                     │
-    └─────────────────┬────────────────────────┘
-                      │
-                      ▼
-    ┌──────────────────────────────────────────┐
-    │  PHASE 2: LOAD STATE                     │
-    │  git pull → completed_links.json         │
-    │  + Download artifact (backup)            │
-    │  First run = {"folders":{}               │
-    └─────────────────┬────────────────────────┘
-                      │
-                      ▼
-    ┌──────────────────────────────────────────┐
-    │  PHASE 3: PREPARE                        │
-    │  Parse MEGA_LINKS secret (JSON format)   │
-    │  Identify active folder                  │
-    │  Filter already-completed URLs           │
-    │  Separate oversized files (>5GB)         │
-    └─────────────────┬────────────────────────┘
-                      │
-                      ▼
-    ┌──────────────────────────────────────────┐
-    │  PHASE 4: PROCESS ONE FILE               │
-    │  (See "Per-File Processing" below)       │
-    │  After each file: git push state         │
-    └─────────────────┬────────────────────────┘
-                      │
-         ┌────────────┴────────────┐
-         ▼                         ▼
-    ┌──────────┐            ┌──────────────┐
-    │ More     │            │ No more      │
-    │ files?   │──YES──────▶│ files /      │
-    │          │            │ quota full?  │
-    └──────────┘            └──────┬───────┘
-         NO                        │ YES
-         │                         │
-         ▼                         ▼
-    ┌──────────────────────────────────────────┐
-    │  PHASE 5: COMPLETE RUN                   │
-    │  1. Check folder completion              │
-    │     If done: mark complete               │
-    │     Activate next folder                 │
-    │  2. Upload artifact (overwrite)          │
-    │  3. Git commit + push (final backup)     │
-    │  4. Auto-trigger? Only if not cancelled  │
-    │     (if: success() || failure())         │
-    │  5. Auto-stop if all folders done        │
-    └─────────────────┬────────────────────────┘
-                      │
-                      ▼
-    ┌──────────────────────────────────────────┐
-    │            WORKFLOW END                  │
-    └──────────────────────────────────────────┘
+    +------------------------------------------+
+    |    MANUAL TRIGGER or AUTO-TRIGGER        |
+    |    (Cron */15 + auto-trigger)            |
+    +--------------------+---------------------+
+                         | Trigger
+                         v
+    +------------------------------------------+
+    |  PHASE 1: SETUP                          |
+    |  Install megatools + rclone + Python     |
+    |  pip install async-mega.py               |
+    |  Install ffmpeg                          |
+    +--------------------+---------------------+
+                         |
+                         v
+    +------------------------------------------+
+    |  PHASE 2: LOAD STATE                     |
+    |  actions/checkout@v4 (git checkout)      |
+    |  Reads completed_links.json from repo    |
+    |  First run = {"folders":{}}              |
+    +--------------------+---------------------+
+                         |
+                         v
+    +------------------------------------------+
+    |  PHASE 3: PREPARE                        |
+    |  Parse MEGA_LINKS secret (JSON format)   |
+    |  Identify active folder                  |
+    |  Filter already-completed URLs           |
+    |  Separate oversized files (>5GB)         |
+    +--------------------+---------------------+
+                         |
+                         v
+    +------------------------------------------+
+    |  PHASE 4: MAIN TRANSFER                  |
+    |  Run mega_to_gdrive.py                   |
+    |  Per file:                               |
+    |  - megadl --info (metadata)              |
+    |  - Check oversized (>5GB)                |
+    |  - Check quota                           |
+    |  - megadl --path (download)              |
+    |  - rclone copy (upload)                  |
+    +--------------------+---------------------+
+                         |
+            +------------+------------+
+            v                         v
+       +----------+            +--------------+
+       | More     |            | No more      |
+       | files?   |--YES------>| files /      |
+       |          |            | quota full?  |
+       +----------+            +------+-------+
+            NO                        |
+            |                         v
+       +------------------------------------------+
+       |  PHASE 5: OVERSIZED PROCESSING           |
+       |  Run oversized_processor.py              |
+       |  - Download chunks from MEGA CDN         |
+       |  - Decrypt with AES-128-CTR              |
+       |  - Upload chunk artifacts                |
+       |  - OR: Concat + ffprobe + upload         |
+       +--------------------+---------------------+
+                         |
+                         v
+    +------------------------------------------+
+    |  PHASE 6: COMPLETE RUN                   |
+    |  1. Upload artifact (backup)              |
+    |  2. Git commit + push (state backup)      |
+    |  3. Auto-trigger? Only if not cancelled   |
+    |     (if: success() || failure())          |
+    |  4. Auto-stop if all folders done         |
+    +--------------------+---------------------+
+                         |
+                         v
+    +------------------------------------------+
+    |            WORKFLOW END                  |
+    +------------------------------------------+
 ```
 
 ### Per-File Processing (Detailed)
@@ -218,162 +231,165 @@ Both files are committed to git after every meaningful state change (per-chunk, 
 When Phase 4 starts, each file goes through these steps:
 
 ```
-    ┌─────────────────────────────────────────────────────┐
-    │              START PROCESSING ONE FILE               │
-    └─────────────────────────┬───────────────────────────┘
-                              │
-                              ▼
-    ┌─────────────────────────────────────────────────────┐
-    │  STEP A: GET FILE INFO (via mega.py)                │
-    │  ┌───────────────────────────────────────────────┐  │
-    │  │ Mega().get_public_url_info(url)               │  │
-    │  │ Returns: (filename, size_bytes)               │  │
-    │  │ No download — pure metadata (~1-2 sec)        │  │
-    │  │ Fallback to megadl --info if mega.py fails    │  │
-    │  └───────────────────────────────────────────────┘  │
-    └─────────────────────────┬───────────────────────────┘
-                              │
-                              ▼
-    ┌─────────────────────────────────────────────────────┐
-    │  STEP B: OVERSIZED CHECK                            │
-    │  ┌───────────────────────────────────────────────┐  │
-    │  │ Is file_size > 5GB?                           │  │
-    │  └──────────┬────────────────────┬───────────────┘  │
-    │             │ YES                │ NO               │
-    │             ▼                    │                  │
-    │  ┌──────────────────┐            │                  │
-    │  │ Add to OVERSIZED │            │                  │
-    │  │ list in artifact │            │                  │
-    │  │ Skip forever     │            │                  │
-    │  └──────────────────┘            │                  │
-    └──────────────────────────────────┼──────────────────┘
-                                       │ (only if NOT oversized)
-                                       ▼
-    ┌─────────────────────────────────────────────────────┐
-    │  STEP C: QUOTA CHECK                                │
-    │  ┌───────────────────────────────────────────────┐  │
-    │  │ quota_used + file_size > 5GB?                 │  │
-    │  └──────────┬────────────────────┬───────────────┘  │
-    │             │ YES                │ NO               │
-    │             ▼                    ▼                  │
-    │  ┌──────────────────┐    ┌──────────────────────┐   │
-    │  │ Skip this file   │    │ quota_used += size   │   │
-    │  │ Next run retries │    │ Start download →     │   │
-    │  └──────────────────┘    └──────────────────────┘   │
-    └─────────────────────────────────────────────────────┘
-                              │ (only if quota OK)
-                              ▼
-     ┌─────────────────────────────────────────────────────┐
-     │  STEP D: DOWNLOAD FROM MEGA (via megadl only)       │
-     │  ┌───────────────────────────────────────────────┐  │
-     │  │ megadl --path TEMP_DIR <url>                  │  │
-     │  │ (mega.py download_url removed — it hangs      │  │
-     │  │  on broken links indefinitely)                │  │
-     │  │ Timeout: 600s (megadl hangs, runner moves on) │  │
-     │  │ File saved: TEMP_DIR/<filename>               │  │
-     │  └───────────────────────────────────────────────┘  │
-     └─────────────────────────┬───────────────────────────┘
-                              │
-                              ▼
-    ┌─────────────────────────────────────────────────────┐
-    │  STEP E: UPLOAD TO GOOGLE DRIVE                     │
-    │  ┌───────────────────────────────────────────────┐  │
-    │  │ 1. Create folder if not exists:               │  │
-    │  │    rclone mkdir gdrive:MEGA_Transfer/Folder   │  │
-    │  │ 2. Upload file:                               │  │
-    │  │    rclone copy <file> <gdrive:/>              │  │
-    │  │ 3. Verify: no verify needed                   │  │
-    │  │    (Upload always succeeds or raises error)   │  │
-    │  └───────────────────────────────────────────────┘  │
-    └─────────────────────────┬───────────────────────────┘
-                              │
-                              ▼
-    ┌─────────────────────────────────────────────────────┐
-    │  STEP F: SAVE STATE + GIT PUSH                      │
-    │  ┌───────────────────────────────────────────────┐  │
-    │  │ 1. Append to completed_links.json:            │  │
-    │  │    - url, filename, size                      │  │
-    │  │    - target_folder, completed_at              │  │
-    │  │ 2. git add + git commit + git push            │  │
-    │  │    (Per-file push = CRASH-PROOF)              │  │
-    │  │    Runner dies bhi → state already in repo!   │  │
-    │  └───────────────────────────────────────────────┘  │
-    └─────────────────────────┬───────────────────────────┘
-                              │
-                              ▼
-    ┌─────────────────────────────────────────────────────┐
-    │  STEP G: CLEANUP & LOG                              │
-    │  ┌───────────────────────────────────────────────┐  │
-    │  │ 1. Delete: TEMP_DIR/*                         │  │
-    │  │ 2. Print: "5/10 done | Quota: 3.4/5.0 GB"    │  │
-    │  └───────────────────────────────────────────────┘  │
-    └─────────────────────────┬───────────────────────────┘
-                              │
-                              ▼
-    ┌─────────────────────────────────────────────────────┐
-    │  Return to "More files?" check in Main Diagram      │
-    └─────────────────────────────────────────────────────┘
+    +-----------------------------------------------------+
+    |              START PROCESSING ONE FILE               |
+    +---------------------------+---------------------------+
+                              |
+                              v
+    +-----------------------------------------------------+
+    |  STEP A: GET FILE INFO                               |
+    |  +-----------------------------------------------+  |
+    |  | 1. megadl --info <url> (primary, CLI)         |  |
+    |  |    Returns: filename + size in ~1-2 sec       |  |
+    |  | 2. Fallback: mega.py get_public_url_info()    |  |
+    |  |    if megadl fails or returns no size          |  |
+    |  +-----------------------------------------------+  |
+    +---------------------------+---------------------------+
+                              |
+                              v
+    +-----------------------------------------------------+
+    |  STEP B: OVERSIZED CHECK                            |
+    |  +-----------------------------------------------+  |
+    |  | Is file_size > 5GB?                           |  |
+    |  +----------+---------------------+--------------+  |
+    |             | YES                 | NO              |
+    |             v                     |                 |
+    |  +------------------+            |                 |
+    |  | Add to completed |            |                 |
+    |  | array with       |            |                 |
+    |  | status:"unupload"|            |                 |
+    |  | oversized:true   |            |                 |
+    |  | Skip forever     |            |                 |
+    |  +------------------+            |                 |
+    +-----------------------------------+-----------------+
+                                       | (only if NOT oversized)
+                                       v
+    +-----------------------------------------------------+
+    |  STEP C: QUOTA CHECK                                |
+    |  +-----------------------------------------------+  |
+    |  | quota_used + file_size > 5GB?                 |  |
+    |  +----------+---------------------+--------------+  |
+    |             | YES                 | NO              |
+    |             v                     v                 |
+    |  +------------------+    +--------------------+     |
+    |  | Skip this file   |    | quota_used += size |     |
+    |  | (break loop)     |    | Start download     |     |
+    |  +------------------+    +--------------------+     |
+    +-----------------------------------------------------+
+                              | (only if quota OK)
+                              v
+    +-----------------------------------------------------+
+    |  STEP D: DOWNLOAD FROM MEGA (via megadl only)       |
+    |  +-----------------------------------------------+  |
+    |  | megadl --path TEMP_DIR <url>                  |  |
+    |  | Timeout: 600s (megadl hangs, runner moves on) |  |
+    |  | File saved: TEMP_DIR/<filename>               |  |
+    |  +-----------------------------------------------+  |
+    +---------------------------+---------------------------+
+                              |
+                              v
+    +-----------------------------------------------------+
+    |  STEP E: UPLOAD TO GOOGLE DRIVE                     |
+    |  +-----------------------------------------------+  |
+    |  | 1. Create folder if not exists:               |  |
+    |  |    rclone mkdir gdrive:MEGA_Transfer/Folder   |  |
+    |  | 2. Upload file:                               |  |
+    |  |    rclone copy <file> <gdrive:/>              |  |
+    |  | 3. No verify — upload always succeeds or      |  |
+    |  |    raises error (rclone return code != 0)     |  |
+    |  +-----------------------------------------------+  |
+    +---------------------------+---------------------------+
+                              |
+                              v
+    +-----------------------------------------------------+
+    |  STEP F: SAVE STATE                                  |
+    |  +-----------------------------------------------+  |
+    |  | 1. Append to completed_links.json completed[]:|  |
+    |  |    - url, filename, size                      |  |
+    |  |    - target_folder, completed_at              |  |
+    |  |    - status:"uploaded"                        |  |
+    |  | 2. Increment folder done count                |  |
+    |  | NOTE: Git push happens at RUN END,            |  |
+    |  | not after every file                          |  |
+    |  +-----------------------------------------------+  |
+    +---------------------------+---------------------------+
+                              |
+                              v
+    +-----------------------------------------------------+
+    |  STEP G: CLEANUP & LOG                              |
+    |  +-----------------------------------------------+  |
+    |  | 1. Delete: TEMP_DIR/*                         |  |
+    |  | 2. Print: "5/10 done | Quota: 3.4/5.0 GB"    |  |
+    |  +-----------------------------------------------+  |
+    +---------------------------+---------------------------+
+                              |
+                              v
+    +-----------------------------------------------------+
+    |  Return to "More files?" check in Main Diagram      |
+    +-----------------------------------------------------+
 ```
 
 ### Oversized Video Processing (Detailed)
 
-When a file >5GB is detected, the oversized processor takes over:
+When a file >5GB is detected, it gets added to `completed[]` with `status:"unupload"`. The oversized processor then takes over in the next phase:
 
 ```
-     ┌──────────────────────────────────────────────────────┐
-     │          OVERSIZED PIPELINE                           │
-     │                                                       │
-     │  mega_to_gdrive.py detects >5GB file                  │
-     │  → Adds to completed_links.json["oversized"]           │
-     └────────────────────┬─────────────────────────────────┘
-                          │
-                          ▼
-     ┌──────────────────────────────────────────────────────┐
-     │  oversized_processor.py INIT PHASE                    │
-     │                                                       │
-     │  1. Parse MEGA URL → file_id + key_b64url            │
-     │  2. Extract AES key: k1^k3, k2^k4 (half-XOR)        │
-     │  3. IV = raw[32:48] + counter (16-byte aligned)     │
-     │  4. Get download URL from MEGA API (curl POST)       │
-     │  5. Calculate chunks (max 4.5 GB each)               │
-     │  6. Create chunks_history.json with all state        │
-     └────────────────────┬─────────────────────────────────┘
-                          │
-                          ▼
-     ┌──────────────────────────────────────────────────────┐
-     │  LOOP: One chunk per run (auto-triggered)            │
-     │                                                       │
-     │  ┌───────────────────────────────────────────────┐   │
-     │  │ DOWNLOAD PHASE (runs independently per chunk) │   │
-     │  │ 1. GET MEGA CDN URL (via MEGA API)            │   │
-     │  │ 2. curl -r start-end (range request)          │   │
-     │  │ 3. Save encrypted bytes → .enc file           │   │
-     │  │ 4. openssl aes-128-ctr -d → .bin (decrypted)  │   │
-     │  │ 5. SHA256 of decrypted chunk → stored         │   │
-     │  │ 6. Workflow uploads .bin as artifact           │   │
-     │  │ 7. chunks_history: chunk status = "done"      │   │
-     │  │ 8. Auto-trigger runs next chunk/video         │   │
-     │  └───────────────────────────────────────────────┘   │
-     │                          │                            │
-     │                          ▼                            │
-     │  ┌───────────────────────────────────────────────┐   │
-     │  │ All chunks "done"? → CONCAT PHASE              │   │
-     │  └──────────────────────────┬────────────────────┘   │
-     │                             │                         │
-     │                             ▼                         │
-     │  ┌───────────────────────────────────────────────┐   │
-     │  │ CONCAT PHASE (single run)                     │   │
-     │  │ 1. Download all chunk artifacts               │   │
-     │  │ 2. Verify SHA256 of each chunk                │   │
-     │  │    → Mismatch? Reset chunk to "pending"       │   │
-     │  │ 3. Concatenate in order (chunk_01 + chunk_02) │   │
-     │  │ 4. Verify total file size matches expected    │   │
-     │  │ 5. ffprobe check → corruption? Reset all      │   │
-     │  │ 6. Upload final video to GDrive via rclone    │   │
-     │  │ 7. Delete chunk artifacts from GitHub         │   │
-     │  │ 8. Update both state files → git push         │   │
-     │  └───────────────────────────────────────────────┘   │
-     └──────────────────────────────────────────────────────┘
+     +------------------------------------------------------+
+     |          OVERSIZED PIPELINE                           |
+     |                                                       |
+     |  mega_to_gdrive.py detects >5GB file                  |
+     |  -> Adds to completed_links.json completed[]           |
+     |     with status:"unupload", oversized:true             |
+     +--------------------+---------------------------------+
+                          |
+                          v
+     +------------------------------------------------------+
+     |  oversized_processor.py INIT PHASE                    |
+     |                                                       |
+     |  1. Find all status:"unupload" items                 |
+     |  2. Parse MEGA URL -> file_id + key_b64url           |
+     |  3. Extract AES key: k1^k3, k2^k4 (half-XOR)        |
+     |  4. IV = raw[32:48] + counter (16-byte aligned)     |
+     |  5. Get download URL from MEGA API (curl POST)       |
+     |  6. Calculate chunks (max 4.5 GB each)               |
+     |  7. Create chunks_history.json with all state        |
+     +--------------------+---------------------------------+
+                          |
+                          v
+     +------------------------------------------------------+
+     |  LOOP: One chunk per run (auto-triggered)            |
+     |                                                       |
+     |  +-----------------------------------------------+   |
+     |  | DOWNLOAD PHASE (runs independently per chunk) |   |
+     |  | 1. GET MEGA CDN URL (via MEGA API)            |   |
+     |  | 2. urllib Range header (byte range request)    |   |
+     |  | 3. Save encrypted bytes -> .enc file           |   |
+     |  | 4. openssl aes-128-ctr -d -> .bin (decrypted) |   |
+     |  | 5. SHA256 of decrypted chunk -> stored         |   |
+     |  | 6. Workflow uploads .bin as artifact           |   |
+     |  | 7. chunks_history: chunk status = "done"      |   |
+     |  | 8. Auto-trigger runs next chunk/video         |   |
+     |  +-----------------------------------------------+   |
+     |                          |                            |
+     |                          v                            |
+     |  +-----------------------------------------------+   |
+     |  | All chunks "done"? -> CONCAT PHASE            |   |
+     |  +--------------------------+--------------------+   |
+     |                             |                         |
+     |                             v                         |
+     |  +-----------------------------------------------+   |
+     |  | CONCAT PHASE (single run)                     |   |
+     |  | 1. Download all chunk artifacts               |   |
+     |  | 2. Verify SHA256 of each chunk                |   |
+     |  |    -> Mismatch? Reset chunk to "pending"       |   |
+     |  | 3. Concatenate in order (chunk_01 + chunk_02) |   |
+     |  | 4. Verify total file size matches expected    |   |
+     |  | 5. ffprobe check -> corruption? Reset all      |   |
+     |  | 6. Upload final video to GDrive via rclone    |   |
+     |  | 7. Delete chunk artifacts from GitHub         |   |
+     |  | 8. Update both state files -> git push         |   |
+     |  +-----------------------------------------------+   |
+     +------------------------------------------------------+
 ```
 
 ### MEGA Encryption Details
@@ -382,16 +398,16 @@ MEGA encrypts file content with AES-128-CTR. The 32-byte key material from the U
 
 ```
 URL key: base64url (32 bytes)
-    ↓
-raw = mega_b64decode(key_b64url)  →  32 bytes
-    ↓
-raw_hex = raw.hex()  →  64 hex chars
-    ↓
-k1 = raw_hex[0:16]   │  (quarters)
-k2 = raw_hex[16:32]  │
-k3 = raw_hex[32:48]  │
-k4 = raw_hex[48:64]  │
-    ↓
+    |
+raw = mega_b64decode(key_b64url)  ->  32 bytes
+    |
+raw_hex = raw.hex()  ->  64 hex chars
+    |
+k1 = raw_hex[0:16]   |  (quarters)
+k2 = raw_hex[16:32]  |
+k3 = raw_hex[32:48]  |
+k4 = raw_hex[48:64]  |
+    |
 AES-128 key = k1^k3  +  k2^k4     (16 bytes hex)
 IV          = k3     +  0000000000000000  (16 bytes hex - counter at 0)
 
@@ -411,7 +427,7 @@ When `PROCESSOR_VERSION` in `oversized_processor.py` changes, the software auto-
    c. Reset all chunk status to "pending"
    d. Remove all sha256 fields
    e. Update version field
-   f. save → next run re-downloads everything with new logic
+   f. save -> next run re-downloads everything with new logic
 ```
 
 This ensures that if the key derivation or encryption logic changes, old (potentially corrupt) chunks are never reused.
@@ -420,28 +436,29 @@ This ensures that if the key derivation or encryption logic changes, old (potent
 
 ```
         RUN 1                        RUN 2                        RUN 3                        RUN 4
-  ┌──────────────────┐      ┌──────────────────┐      ┌──────────────────┐      ┌──────────────────┐
-  │ State: empty     │      │ Git: 5 done      │      │ Git: 10 done    │      │ Git: 13 done    │
-  │                  │      │ (per-file push)  │      │ (per-file push) │      │ (per-file push) │
-  │ Bollywood: 10   │      │ Bollywood: 10   │      │ Bollywood:10 ✅ │      │ Hollywood:5 ✅  │
-  │ Hollywood: 5    │      │ Hollywood: 5    │      │ Hollywood:5 ▶️ │      │                  │
-  │                  │      │                  │      │                  │      │                  │
-  │ Process: 1-5    │      │ Process: 6-10   │      │ Process: 1-3    │      │ Process: 4-5    │
-  │ (quota: 4.8GB)  │      │ (quota: 4.2GB)  │      │ (quota: 3.1GB)  │      │ (quota: 2.1GB)  │
-  │                  │      │                  │      │                  │      │                  │
-  │ Bollywood:5/10  │      │ Bollywood:10/10 │      │ Hollywood:3/5   │      │ Hollywood:5/5   │
-  │ Hollywood: wait │      │ Hollywood: wait │      │                  │      │                  │
-  │                  │      │                  │      │  ⚡CRASH HERE?   │      │                  │
-  │                  │      │                  │      │  No problem!    │      │                  │
-  │                  │      │                  │      │  Git has 10/10  │      │                  │
-  └──────────────────┘      └──────────────────┘      └──────────────────┘      └──────────────────┘
-                                                                                                       │
-                                                                                                       ▼
-                                                                                              ┌──────────────────┐
-                                                                                              │   ALL DONE !    │
-                                                                                              │  30/30 files    │
-                                                                                              └──────────────────┘
+  +------------------+      +------------------+      +------------------+      +------------------+
+  | State: empty     |      | Git: 5 done      |      | Git: 10 done    |      | Git: 13 done    |
+  |                  |      | (run-end push)   |      | (run-end push)  |      | (run-end push)  |
+  | Bollywood: 10   |      | Bollywood: 10   |      | Bollywood:10 OK |      | Hollywood:5 OK  |
+  | Hollywood: 5    |      | Hollywood: 5    |      | Hollywood:5 --> |      |                  |
+  |                  |      |                  |      |                  |      |                  |
+  | Process: 1-5    |      | Process: 6-10   |      | Process: 1-3    |      | Process: 4-5    |
+  | (quota: 4.8GB)  |      | (quota: 4.2GB)  |      | (quota: 3.1GB)  |      | (quota: 2.1GB)  |
+  |                  |      |                  |      |                  |      |                  |
+  | Bollywood:5/10  |      | Bollywood:10/10 |      | Hollywood:3/5   |      | Hollywood:5/5   |
+  | Hollywood: wait |      | Hollywood: wait |      |                  |      |                  |
+  |                  |      |                  |      |  **CRASH HERE?**|      |                  |
+  |                  |      |                  |      |  No problem!    |      |                  |
+  |                  |      |                  |      |  Git has 10/10  |      |                  |
+  +------------------+      +------------------+      +------------------+      +------------------+
+                                                                                                        |
+                                                                                                        v
+                                                                                               +------------------+
+                                                                                               |   ALL DONE !    |
+                                                                                               |  30/30 files    |
+                                                                                               +------------------+
 ```
+
 ## Artifact System Explained
 
 ### What is an Artifact?
@@ -452,18 +469,18 @@ GitHub Actions **Artifacts** are files that persist **across workflow runs**. Un
 
 **For main transfer (completed_links.json):**
 ```
-Run 1:  [No artifact] → Create empty state → Process → Upload artifact
-Run 2:  [Download artifact] → Read state → Process more → Upload (overwrite)
-Run 3:  [Download artifact] → Read state → Process more → Upload (overwrite)
+Run 1:  [No artifact] -> Create empty state -> Process -> Upload artifact
+Run 2:  [Download artifact] -> Read state -> Process more -> Upload (overwrite)
+Run 3:  [Download artifact] -> Read state -> Process more -> Upload (overwrite)
 ...
 ```
 
 **For oversized processor (chunks + artifacts):**
 ```
-Run 1:  Download chunk_01 → Upload artifact "ck_xyz_01" (chunk .bin file)
-Run 2:  Download chunk_02 → Upload artifact "ck_xyz_02"
-Run 3:  Download all chunk artifacts → Concat → ffprobe ✓ → Upload to GDrive
-        → Delete artifacts "ck_xyz_01", "ck_xyz_02"
+Run 1:  Download chunk_01 -> Upload artifact "ck_xyz_01" (chunk .bin file)
+Run 2:  Download chunk_02 -> Upload artifact "ck_xyz_02"
+Run 3:  Download all chunk artifacts -> Concat -> ffprobe OK -> Upload to GDrive
+        -> Delete artifacts "ck_xyz_01", "ck_xyz_02"
 ```
 
 ### State Files
@@ -497,23 +514,25 @@ Two files track the entire system state, both committed to git after every chang
       "filename": "Interstellar.mp4",
       "size": 2454900000,
       "target_folder": "Bollywood",
-      "completed_at": "2025-01-15T10:30:00Z"
+      "completed_at": "2025-01-15T10:30:00Z",
+      "status": "uploaded"
+    },
+    {
+      "url": "https://mega.nz/file/xyz#key456",
+      "filename": "BigFile_6GB.mp4",
+      "size": 6442450944,
+      "target_folder": "Bollywood",
+      "completed_at": "2025-01-15T10:35:00Z",
+      "status": "unupload",
+      "oversized": true
     }
   ],
   "current_folder": "Bollywood",
   "oversized": {
-    "total": 2,
-    "done": 1,
-    "status": "in_progress",
-    "items": [
-      {
-        "url": "https://mega.nz/file/xyz#key456",
-        "filename": "BigFile_6GB.mp4",
-        "size": 6442450944,
-        "target_folder": "Bollywood",
-        "gdrive_status": "uploaded"
-      }
-    ]
+    "total": 0,
+    "done": 0,
+    "status": "completed",
+    "items": []
   }
 }
 ```
@@ -533,31 +552,32 @@ ck_{file_id_lower}_{chunk_index:02d}
 
 ### Crash-Proof Design
 
-Every successful file upload → **immediately saved to artifact + git push**:
+Every successful file upload is saved to git at run end:
 
 ```
-Process File 1 → Save artifact ✅ + git push ✅ (state on GitHub)
-Process File 2 → Save artifact ✅ + git push ✅ (state on GitHub)
-Process File 3 → 💥 CRASH (VM dies, artifact upload never runs)
-Next Run → git pull → File 1,2 already in state → Skip!
-             → Start from File 3 (not from beginning!)
-
-⚠️ Git push after EVERY file = TRUE crash-proof
-   Artifact at end is backup — git is the real source of truth
+Process File 1 -> Save to state (in memory)
+Process File 2 -> Save to state (in memory)
+...
+Run ends -> Git commit + push (all files processed this run saved at once)
+Process File 3 -> ** CRASH (VM dies, git push never runs)
+Next Run -> git pull -> Files 1,2 already in state -> Skip!
+             -> Start from File 3 (not from beginning!)
 ```
+
+Git push at run end = crash-proof for the entire batch processed in that run.
 
 For oversized videos, crash-proofing extends to chunk artifacts:
 
 ```
-Chunk 1 downloaded → artifact saved ✅ + git push ✅ (chunks_history updated)
-Chunk 2 download → 💥 CRASH (artifact not uploaded)
-Next Run → git pull → chunk 1 is "done", chunk 2 is "pending"
-             → Resume from chunk 2 (no re-download of chunk 1!)
+Chunk 1 downloaded -> artifact saved + git push (chunks_history updated)
+Chunk 2 download -> ** CRASH (artifact not uploaded)
+Next Run -> git pull -> chunk 1 is "done", chunk 2 is "pending"
+             -> Resume from chunk 2 (no re-download of chunk 1!)
 
-Concat phase → 💥 CRASH midway
-Next Run → git pull → video still "concat_ready"
-             → Re-download all chunk artifacts → SHA256 verify
-             → Resume concat from scratch (chunk artifacts survive)
+Concat phase -> ** CRASH midway
+Next Run -> git pull -> video still "concat_ready"
+             -> Re-download all chunk artifacts -> SHA256 verify
+             -> Resume concat from scratch (chunk artifacts survive)
 ```
 
 ---
@@ -619,9 +639,9 @@ Next Run → git pull → video still "concat_ready"
 
 | Field | Description |
 |-------|-------------|
-| `videos[].status` | Overall video status: `pending` → `downloading` → `concat_ready` → `gdrive_uploaded` |
+| `videos[].status` | Overall video status: `pending` -> `downloading` -> `concat_ready` -> `gdrive_uploaded` |
 | `videos[].gdrive_status` | Upload status synced from `completed_links.json`: `pending`, `downloading`, `uploaded` |
-| `chunks[].status` | Per-chunk status: `pending` → `done` (after download + decrypt + sha256 computed) |
+| `chunks[].status` | Per-chunk status: `pending` -> `done` (after download + decrypt + sha256 computed) |
 | `chunks[].sha256` | SHA256 hash of decrypted chunk, stored at download time, verified at concat time |
 | `chunks[].artifact_name` | GitHub Artifact name where the chunk .bin file is stored |
 | `current_index` | Index of the currently processing video (for resumption after crash) |
@@ -631,26 +651,26 @@ Next Run → git pull → video still "concat_ready"
 ### Lifecycle
 
 ```
-                     ┌──────────────┐
-                     │   pending    │
-                     └──────┬───────┘
-                            │ first chunk download starts
-                            ▼
-                     ┌──────────────┐
-                     │ downloading  │  ← per-video
-                     └──────┬───────┘
-                            │ all chunks "done"
-                            ▼
-                     ┌──────────────┐
-                     │ concat_ready │  ← waits for concat run
-                     └──────┬───────┘
-                            │ concat + ffprobe ✓ + upload ✓
-                            ▼
-                     ┌──────────────┐
-                     │gdrive_upload │  ← terminal state
-                     └──────────────┘
+                     +--------------+
+                     |   pending    |
+                     +------+-------+
+                            | first chunk download starts
+                            v
+                     +--------------+
+                     | downloading  |  <- per-video
+                     +------+-------+
+                            | all chunks "done"
+                            v
+                     +--------------+
+                     | concat_ready |  <- waits for concat run
+                     +------+-------+
+                            | concat + ffprobe OK + upload OK
+                            v
+                     +--------------+
+                     |gdrive_upload |  <- terminal state
+                     +--------------+
 
-Chunk state:  pending ──► done
+Chunk state:  pending --> done
               (queued)     (downloaded, decrypted, SHA'd, artifact uploaded)
 ```
 
@@ -664,21 +684,21 @@ MEGA encrypts all files at rest. The public URL contains a base64url-encoded 32-
 
 ```
 Input:  key_b64url (32 bytes, base64url-encoded from MEGA URL after #)
-        │
-        ▼
-raw = mega_b64decode(key_b64url)    → 32 bytes
-raw_hex = raw.hex()                  → 64 hex characters
-        │
-        ▼
+        |
+        v
+raw = mega_b64decode(key_b64url)    -> 32 bytes
+raw_hex = raw.hex()                  -> 64 hex characters
+        |
+        v
 k1 = raw_hex[0:16]   (first 8 bytes as hex)
 k2 = raw_hex[16:32]  (second 8 bytes)
 k3 = raw_hex[32:48]  (third 8 bytes)
 k4 = raw_hex[48:64]  (fourth 8 bytes)
-        │
-        ▼
+        |
+        v
 aes_key = f"{k1 ^ k3:016x}{k2 ^ k4:016x}"
          = k1 XOR k3 concatenated with k2 XOR k4
-         = first half XOR second half → 16 bytes AES-128 key
+         = first half XOR second half -> 16 bytes AES-128 key
 
 iv_nonce = raw_hex[32:48]            = k3 (8 bytes as hex)
 iv       = iv_nonce + "0000000000000000"
@@ -706,30 +726,27 @@ In the first version, the key was incorrectly derived as `k1 XOR k2` + `k3 XOR k
 |---------|-------------|
 | **Multi-folder** | JSON-based folder mapping. Each key = GDrive folder name. Auto-created via rclone mkdir. |
 | **megadl-only download** | `mega.py` `download_url()` removed (hangs on broken links). Uses `megadl --path` with 600s timeout. |
-| **mega.py metadata** | Only used for `get_public_url_info()` to fetch file size before download (quota check). |
+| **mega.py metadata** | Used as fallback for `get_public_url_info()` when `megadl --info` fails. |
 | **asyncio.coroutine fallback** | Python 3.12+ compatibility fix for mega.py dependency. |
-| **Per-file git push** | Har file upload ke baad turant `git commit + push`. Workflow crash ho tab bhi state safe. |
-| **Smart quota** | Har file se pehle metadata fetch → size check. Agar quota exceed hone wala ho → skip gracefully. |
+| **Per-run git push** | Git commit + push happens at run end and folder completion. State saved in memory during run. |
+| **Smart quota** | Har file se pehle metadata fetch, size check. Agar quota exceed hone wala ho, skip gracefully. |
 | **Oversized processor** | Files >5GB are chunked (4.5 GB each), downloaded across multiple runs, decrypted with AES-128-CTR, SHA256-verified, concatenated, ffprobe-checked, then uploaded to GDrive |
-| **MEGA encryption** | Direct CDN download via `curl -r` (byte range) → decrypt with `openssl aes-128-ctr` using MEGA's half-XOR key derivation (`k1^k3, k2^k4`) |
+| **MEGA encryption** | Direct CDN download via urllib Range header, decrypt with `openssl aes-128-ctr` using MEGA's half-XOR key derivation (`k1^k3, k2^k4`) |
 | **Chunk progress** | Real-time `[DOWNLOAD] X MB / Y MB (Z%) @ W MB/s` every 2 seconds, `[CONCAT] [i/n] X GB / Y GB (Z%)` every 1 MB, `[UPLOAD]` from rclone stats |
-| **SHA256 verification** | Each chunk's SHA256 stored at download time, re-verified before concat. Mismatch → auto-reset to pending for re-download |
-| **ffprobe gate** | Concatenated file must pass `ffprobe -v error` check before upload. Failure → all chunks reset, artifacts deleted, re-download |
+| **SHA256 verification** | Each chunk's SHA256 stored at download time, re-verified before concat. Mismatch, auto-reset to pending for re-download |
+| **ffprobe gate** | Concatenated file must pass `ffprobe -v error` check before upload. Failure, all chunks reset, artifacts deleted, re-download |
 | **Artifact cleanup** | Chunk artifacts auto-deleted after successful concat + upload. Logs confirm each deletion |
 | **Version migration** | `PROCESSOR_VERSION` field auto-detects old chunks (e.g., after key derivation fix), deletes all artifacts, resets to pending for clean re-download |
-| **Concurrency guard** | Only 1 run at a time — parallel runs prevented; queued runs wait (`cancel-in-progress: false`) |
-| **Folder auto-advance** | Ek folder complete → next pending folder automatically active. |
+| **Concurrency guard** | Only 1 run at a time, parallel runs prevented; queued runs wait (`cancel-in-progress: false`) |
+| **Folder auto-advance** | Ek folder complete, next pending folder automatically active. |
 | **Clean logs** | Only `DOWNLOADING...` / `Downloaded: X MB in Ys` — no megadl progress spam. |
-| **Git backup** | Dual protection: Artifact + per-file git push. Har file ka record safe. |
-| **Auto-trigger** | Files baki hain? → Next cycle automatically trigger via gh workflow run (skip on cancellation). |
-| **Auto-stop** | Saare folders complete → no more cycles triggered. |
-| **Multi-file merge** | Multiple `.txt` files ko merge karke ek single MEGA_LINKS secret banana (Python script included). |
+| **Git backup** | State saved to git at run end and folder completion. Artifact uploaded as backup. |
+| **Auto-trigger** | Files baki hain, next cycle automatically trigger via gh workflow run (skip on cancellation). |
+| **Auto-stop** | Saare folders complete, no more cycles triggered. |
 | **Cron safety net** | `*/15 * * * *` cron triggers every 15 min — if auto-trigger fails, cron picks up |
 | **Secret-based links** | `MEGA_LINKS` GitHub Secret is the source of truth — not the repo files. |
 
 ---
-
-## 🔑 Required GitHub Secrets (Must-Know Before You Start)
 
 ## Setup Guide
 
@@ -744,7 +761,7 @@ In the first version, the key was incorrectly derived as `k1 XOR k2` + `k3 XOR k
 
 ### Step 1: Fork / Clone This Repository
 
-`ash
+```bash
 git clone https://github.com/your-username/MEGA-TO-GDRIVE-GITHUB-CRON.git
 cd MEGA-TO-GDRIVE-GITHUB-CRON
 ```
@@ -753,7 +770,7 @@ cd MEGA-TO-GDRIVE-GITHUB-CRON
 
 If you don't have rclone configured for Google Drive:
 
-`ash
+```bash
 # Install rclone (if not installed)
 curl -s https://rclone.org/install.sh | sudo bash
 
@@ -776,7 +793,7 @@ Use auto config? y
 ```
 
 After setup, view your config:
-`ash
+```bash
 rclone config show gdrive
 ```
 
@@ -798,11 +815,11 @@ Go to your repo → **Settings → Secrets and variables → Actions → New rep
 
 Your MEGA file links in JSON format — one line (minified):
 
-```
+```json
 {"Bollywood Movies":["https://mega.nz/file/abc123#key1","https://mega.nz/file/def456#key2"],"Hollywood Movies":["https://mega.nz/file/ghi789#key3","https://mega.nz/file/jkl012#key4"]}
 ```
 
-> ⚠️ **Important:** Script repo file (`MEGA_LINKS_merged.json`) nahi, **GitHub Secret `MEGA_LINKS`** padhta hai. Isliye files update karne ka effect nahi hoga — secret update karna zaroori hai.
+> **Important:** Script repo file (`MEGA_LINKS_merged.json`) nahi, **GitHub Secret `MEGA_LINKS`** padhta hai. Isliye files update karne ka effect nahi hoga — secret update karna zaroori hai.
 
 **Rules:**
 - **Key** = GDrive folder name (automatically created)
@@ -828,7 +845,7 @@ python -c "import json; urls=[l.strip() for l in open('links.txt') if l.strip()]
 
 Output copy karo aur GitHub Secret mein paste karo. Example output:
 
-```
+```json
 {"FolderName":["https://mega.nz/file/abc#key1","https://mega.nz/file/def#key2","https://mega.nz/file/ghi#key3"]}
 ```
 
@@ -870,8 +887,7 @@ python -c "import json; s=[l.strip() for l in open('Shorts/MEGA_LINKS.txt') if l
 
 #### Secret 2: RCLONE_CONF
 
-Paste the **entire output** of 
-clone config show gdrive
+Paste the **entire output** of `rclone config show gdrive`:
 
 ```
 [gdrive]
@@ -900,7 +916,7 @@ Auto-trigger feature ke liye zaroori hai. Jab ek run khatam hota hai aur files r
 9. Apne repo mein jao → **Settings → Secrets and variables → Actions → New repository secret**
 10. Name: `GH_PAT`, Value: (token paste karo) → **Add secret**
 
-> ⚠️ **Note:** Token ke bina auto-trigger kaam nahi karega. Workflow manually tab hi chalana padega. Files transfer toh hongi, par har run ke baad aapko khud "Run workflow" click karna hoga.
+> **Note:** Token ke bina auto-trigger kaam nahi karega. Workflow manually tab hi chalana padega. Files transfer toh hongi, par har run ke baad aapko khud "Run workflow" click karna hoga.
 
 ---
 
@@ -931,12 +947,12 @@ The workflow runs automatically via three mechanisms:
 ### MEGA_LINKS (JSON Format)
 
 **Correct format (one line, minified):**
-`json
+```json
 {"FolderA":["https://mega.nz/file/abc#key","https://mega.nz/file/def#key"],"FolderB":["https://mega.nz/file/ghi#key"]}
 ```
 
 **Readable version (for understanding, do NOT use in secret):**
-`json
+```json
 {
   "Bollywood Movies": [
     "https://mega.nz/file/abc123#key1",
@@ -948,7 +964,7 @@ The workflow runs automatically via three mechanisms:
 }
 ```
 
-**❌ Wrong format (plain text — will cause JSON parse error):**
+**Wrong format (plain text — will cause JSON parse error):**
 ```
 https://mega.nz/file/abc123#key1
 https://mega.nz/file/def456#key2
@@ -969,7 +985,7 @@ https://mega.nz/file/def456#key2
 #### Method 1: GitHub Web UI (Sabse Easy — Recommended)
 
 1. Apne repo mein jao → `completed_links.json` file open karo
-2. ✏️ Edit button (pencil icon) click karo
+2. Edit button (pencil icon) click karo
 3. Puri file **replace** karo with:
 
 ```json
@@ -1025,7 +1041,7 @@ Maano pehle state tha:
     { "url": "https://...", "filename": "video2.mp4", ... }
   ],
   "current_folder": "Documentry",
-  "oversized": []
+  "oversized": { "total": 0, "done": 0, "status": "completed", "items": [] }
 }
 ```
 
@@ -1042,7 +1058,7 @@ Agli run mein kya hoga:
 4. Saari **45 + 208 = 253 files** dobara process hogi
 5. Pehle se GDrive mein existing files hain toh **duplicate upload hogi** (rclone overwrite nahi karta)
 
-> ⚠️ **Warning:** Sirf tab reset karo jab sach mein fresh start chahiye. Agar sirf kuch files skip karni hain, toh `completed_links.json` manually edit karo (Web UI se) aur unwanted URLs `completed` array mein daal do.
+> **Warning:** Sirf tab reset karo jab sach mein fresh start chahiye. Agar sirf kuch files skip karni hain, toh `completed_links.json` manually edit karo (Web UI se) aur unwanted URLs `completed` array mein daal do.
 
 ### Partial Reset — Sirf Ek Folder Reset Karna
 
@@ -1056,7 +1072,7 @@ Agar ek folder ki files dobara chahiye (baaki folders ka state preserve rakhna h
   },
   "completed": [],
   "current_folder": null,
-  "oversized": []
+  "oversized": { "total": 0, "done": 0, "status": "completed", "items": [] }
 }
 ```
 
@@ -1085,19 +1101,19 @@ MEGA free accounts limit download bandwidth to approximately **5GB per day** per
 | Mechanism | Description |
 |-----------|-------------|
 | **Fresh VM = Fresh Quota** | Every GitHub Actions run gets a new VM with a new IP — MEGA sees it as a new user with full quota |
-| **Pre-check before download** | megadl --info fetches file size without downloading. If current run's remaining quota < file size → skip gracefully |
-| **Graceful exit** | When quota nears exhaustion, script exits cleanly. Artifact is already saved → next run resumes |
-| **Per-run limit** | Script tracks quota_used in memory. Once it exceeds 5GB, stops processing more files |
+| **Pre-check before download** | `megadl --info` fetches file size without downloading. If current run's remaining quota < file size, skip gracefully |
+| **Graceful exit** | When quota nears exhaustion, script exits cleanly. State saved to git at run end, next run resumes |
+| **Per-run limit** | Script tracks `quota_used` in memory. Once it exceeds 5GB, stops processing more files |
 
 ### Example Quota Scenario
 
 ```
 Run starts: quota_used = 0GB, quota_max = 5GB
 
-File 1: size = 1.2GB → 0 + 1.2 = 1.2 ≤ 5 → ✅ Download + Upload
-File 2: size = 2.3GB → 1.2 + 2.3 = 3.5 ≤ 5 → ✅ Download + Upload
-File 3: size = 1.8GB → 3.5 + 1.8 = 5.3 > 5 → ⏭️ Skip (next run)
-File 4: size = 800MB → (Not checked, loop already broke)
+File 1: size = 1.2GB -> 0 + 1.2 = 1.2 <= 5 -> Download + Upload
+File 2: size = 2.3GB -> 1.2 + 2.3 = 3.5 <= 5 -> Download + Upload
+File 3: size = 1.8GB -> 3.5 + 1.8 = 5.3 > 5 -> Skip (next run)
+File 4: size = 800MB -> (Not checked, loop already broke)
 ```
 
 ---
@@ -1130,7 +1146,7 @@ MEGA_LINKS JSON (secret)             completed_links.json (state)
                                       | }                          |
                                       | "completed": [...]        |
                                       | "current_folder": "Shorts"|
-                                      | "oversized": [...]        |
+                                      | "oversized": {...}        |
                                       +----------------------------+
 ```
 
@@ -1144,12 +1160,11 @@ Run 1-3:  Shorts [>> active] --- 16/45 done (quota hit)
 Run 4-5:  Shorts [>> active] --- 32/45 done
           |
 Run 6:    Shorts [>> active] --- 45/45 done
-          | (folder complete)
+          | (folder complete, git push at run end)
 Final:    Shorts [OK done] --- ALL DONE!
 ```
 
 ---
-
 
 ## Upload Strategy
 
@@ -1159,21 +1174,23 @@ Previous versions used `rclone lsjson` to verify each upload. This was **removed
 
 1. **Upload always succeeds or raises error** — rclone copy returns non-zero on failure
 2. **Timeouts caused crashes** — `rclone lsjson` could timeout (30s) and crash the script mid-batch
-3. **Per-file git push** provides the real crash-proofing — state saved to git before next file
+3. **Git push at run end** provides the crash-proofing — state saved to git when run completes
 
 ### What happens after upload:
 
 ```
 rclone copy <local_file> gdrive:MEGA_Transfer/<folder>/
-if rclone returns 0 → upload succeeded → save state + git push
-if rclone returns non-zero → RuntimeError → skip to next file (TEMP_DIR cleaned)
+if rclone returns 0 -> upload succeeded -> save state (in memory)
+if rclone returns non-zero -> RuntimeError -> skip to next file (TEMP_DIR cleaned)
+
+At run end: git add + git commit + git push (all files from this run saved at once)
 ```
 
 ---
 
 ## Log Output Examples
 
-### Normal Run (Mid-Progress — Current Clean Style)
+### Normal Run (Mid-Progress)
 
 ```
 =======================================================
@@ -1189,24 +1206,22 @@ if rclone returns non-zero → RuntimeError → skip to next file (TEMP_DIR clea
 =======================================================
 
   --- [1/195] Documentry ---
-  Fetching: https://mega.nz/file/AbCdEfG#DeMoKeY123... (example, truncated)
+  Fetching: https://mega.nz/file/AbCdEfG#DeMoKeY123...
   [Documentry] "1169470_720.mp4" | Size: 483.3 MB
   DOWNLOADING: "1169470_720.mp4" (483.3 MB)...
   Downloaded: 483.3 MB in 12s
   UPLOADING: "1169470_720.mp4" (483.3 MB) to GDrive/MEGA_Transfer/Documentry/...
   Uploaded: "1169470_720.mp4" (483.3 MB in 28s)
-  Artifact+Git saved: 14/208 done
   [1/195] Complete | Quota: 483.3 MB/5.0 GB
   --------------------------------------------------
 
   --- [2/195] Documentry ---
-  Fetching: https://mega.nz/file/XyZ789Ab#DeMoKeY456... (example, truncated)
+  Fetching: https://mega.nz/file/XyZ789Ab#DeMoKeY456...
   [Documentry] "1186769_720.mp4" | Size: 287.5 MB
   DOWNLOADING: "1186769_720.mp4" (287.5 MB)...
   Downloaded: 287.5 MB in 11s
   UPLOADING...
   Uploaded: "1186769_720.mp4" (287.5 MB in 61s)
-  Artifact+Git saved: 15/208 done
   [2/195] Complete | Quota: 770.7 MB/5.0 GB
   --------------------------------------------------
 
@@ -1216,7 +1231,6 @@ if rclone returns non-zero → RuntimeError → skip to next file (TEMP_DIR clea
   RUN SUMMARY
   --------------------------------------------------
   Processed: 5 files
-  Quota used: 3.4 GB / 5.0 GB
   [DONE] Shorts: 45/45
   [ACTIVE] Documentry: 18/208
 =======================================================
@@ -1230,7 +1244,7 @@ if rclone returns non-zero → RuntimeError → skip to next file (TEMP_DIR clea
   --- [3/5] Bollywood Movies ---
   Fetching: https://mega.nz/file/ghi789...
   [Bollywood Movies] "Tenet.mp4" | Size: 2.0 GB
-  Quota full: 3.4 GB + 2.0 GB = 5.4 GB > 5GB
+  Quota full: 3.4 GB + 2.0 GB > 5GB
   Skipping "Tenet.mp4" for this run
 ```
 
@@ -1240,20 +1254,20 @@ if rclone returns non-zero → RuntimeError → skip to next file (TEMP_DIR clea
   --- [3/5] Bollywood Movies ---
   Fetching: https://mega.nz/file/xyz789...
   [Bollywood Movies] "BigVideo_6GB.mp4" | Size: 6.0 GB
-  OVERSIZED: BigVideo_6GB.mp4 (6.0 GB) > 5GB
+  OVERSIZED: BigVideo_6GB.mp4 (6.0 GB) > 5GB — adding to pending oversized
 ```
 
 ### Folder Complete
 
 ```
   FOLDER COMPLETE: [Bollywood Movies] - 10/10 files
-  Next folder: [Hollywood Movies] - 0/8
+  >>> Activating next: [Hollywood Movies]
 ```
 
 ### All Done
 
 ```
-  ALL FOLDERS COMPLETE! Sab files transfer ho gayi!
+  ALL FOLDERS COMPLETE! Sab kaam ho gaya!
 ```
 
 ### Oversized Video — Chunk Download
@@ -1306,7 +1320,7 @@ if rclone returns non-zero → RuntimeError → skip to next file (TEMP_DIR clea
 
 ```
   =============================================
-  OVERSIZED SUMMARY: 3/4 uploaded to GDrive | status: in_progress
+  OVERSIZED SUMMARY: 3/4 uploaded to GDrive
     [    uploaded] Video One...
     [    uploaded] Video Two...
     [  uploading] Video Three...
@@ -1317,7 +1331,7 @@ if rclone returns non-zero → RuntimeError → skip to next file (TEMP_DIR clea
 ### Processor Version Migration
 
 ```
-  Processor version changed 1 → 2, resetting all chunks...
+  Processor version changed 1 -> 2, resetting all chunks...
   Deleted artifact ck_abc123_01
   Deleted artifact ck_abc123_02
   Deleted artifact ck_def456_01
@@ -1338,15 +1352,14 @@ if rclone returns non-zero → RuntimeError → skip to next file (TEMP_DIR clea
 | File stuck in "pending" but already in GDrive | State file corrupted/lost | Check completed_links.json in git — reset state if needed |
 | Upload fails with 403 | Token expired | rclone auto-refreshes token |
 | Folder not appearing in GDrive | Remote name wrong | Default remote is gdrive, must match rclone config |
-| Workflow cancels but new one starts | Auto-trigger ran on cancellation | Fixed! Now uses `if: success() || failure()` |
-| Files >5GB never get processed | MEGA quota limit per run | Download manually and upload via rclone |
+| Workflow cancels but new one starts | Auto-trigger ran on cancellation | Fixed! Now uses `if: success() \|\| failure()` |
+| Files >5GB never get processed | MEGA quota limit per run | Oversized processor handles them via chunked download |
 | State file corrupted/merge conflict | Git pull --rebase conflict in completed_links.json | Reset state using methods in "Resetting Completion List" section |
 | 422 error on workflow_dispatch | YAML parse error (inline Python broke YAML) | Fixed! Python code extracted to auto_trigger.py |
 | mega.py ImportError / asyncio.coroutine error | Python 3.12+ removed coroutine() | Fixed! Script adds fallback: `asyncio.coroutine = lambda c: c` |
 | mega.py download hung / timeout | mega.py download_url() hangs on broken links | Fixed! Removed mega.py download — only megadl with 600s timeout |
 | Log mein megadl progress lines aa rahi hain | Script was printing megadl stdout | Fixed! megadl stdout captured but not printed — only clean DOWNLOADING/Downloaded shown |
 | MEGA_LINKS_merged.json update ka effect nahi ho raha | Secret used, not repo file | Update the `MEGA_LINKS` GitHub Secret directly, not the file |
-| Merged JSON mein links count mismatch | Multiple text files se merge karte waqt total galat ho raha | Ensure each text file ke URLs processed ho rahe hain — Python script se count check karo |
 | Oversized video stuck at "pending" | Chunks history corrupted or version mismatch | Check `chunks_history.json` version field; if mismatch, processor auto-resets |
 | Chunk download fails with "Size mismatch" | MEGA CDN returned incomplete data | Auto-retry logic (3 attempts) handles transient failures |
 | ffprobe rejects concatenated file | Data corruption during download or artifact storage | Processor auto-resets all chunks to `pending`, deletes artifacts, re-downloads |
@@ -1355,7 +1368,6 @@ if rclone returns non-zero → RuntimeError → skip to next file (TEMP_DIR clea
 | Chunk artifact shows "null" ID | Artifact hasn't been uploaded yet (still pending) | Normal — download phase will upload it |
 | Oversized processor version increment | Key derivation or encryption logic changed | Auto-detected, all old chunks deleted and re-downloaded with new logic |
 | `actions/download-artifact` removed from workflow | State files now always come from git checkout, not artifacts | Normal — `completed_links.json` and `chunks_history.json` read from working directory |
-| `gdrive_status` shows "uploaded" but video should be re-downloaded | State file needs manual reset | Edit `completed_links.json` → set `gdrive_status` to `"pending"`, remove from `completed` array, reset chunks in `chunks_history.json` |
 
 ---
 
@@ -1365,121 +1377,119 @@ if rclone returns non-zero → RuntimeError → skip to next file (TEMP_DIR clea
 MEGA-TO-GDRIVE-GITHUB-CRON/
 ├── .github/
 │   └── workflows/
-│       └── mega_gdrive_transfer.yml       ← GitHub Actions workflow (manual + auto-trigger)
-├── mega_to_gdrive.py                      ← Main transfer script (all logic)
-├── oversized_processor.py                 ← Oversized video processor (chunk, decrypt, concat, upload)
-├── auto_trigger.py                        ← Auto-trigger next cycle if files remain
-├── completed_links.json                   ← State file (auto-generated, per-file git push)
-├── chunks_history.json                    ← Chunks state file (auto-generated, oversized tracking)
-├── test_oversized.py                      ← Unit tests for oversized processor logic
-├── MEGA_LINKS.json                        ← Shorts folder links (example)
-├── MEGA_LINKS_Documentry.json             ← Documentry folder links (example)
-├── MEGA_LINKS_merged.json                 ← Merged JSON from multiple text files
-├── .github/Shorts/MEGA_LINKS.txt          ← Source text file for Shorts
-├── .github/Documentry/MEGA_LINKS.txt      ← Source text file for Documentry
-├── .gitignore                             ← Ignores TEMP_DIR (downloads)
-└── README.md                              ← This file
+│       └── mega_gdrive_transfer.yml       <- GitHub Actions workflow (manual + cron + auto-trigger)
+├── mega_to_gdrive.py                      <- Main transfer script (normal files)
+├── oversized_processor.py                 <- Oversized video processor (chunk, decrypt, concat, upload)
+├── auto_trigger.py                        <- Auto-trigger next cycle if files remain
+├── completed_links.json                   <- State file (auto-generated, git-pushed at run end)
+├── chunks_history.json                    <- Chunks state file (auto-generated, oversized tracking)
+├── test_oversized.py                      <- Unit tests for oversized processor logic
+├── test_scan_local.py                     <- Unit tests for MEGA folder scanning
+├── app.py                                 <- FastAPI web app (local transfer runner + MEGA scanner)
+├── backend.py                             <- Flask backend (MEGA folder scanner API)
+├── mega_links_generator.html              <- Web UI for generating MEGA_LINKS secret
+├── all_folders_*.json                     <- Scanned folder data (auto-generated)
+├── MEGA_LINKS.json                        <- Example MEGA links (example source)
+├── MEGA_LINKS_merged.json                 <- Merged JSON from multiple text files (backup reference only)
+├── MEGA_LINKS_TREE.md                     <- MEGA folder tree documentation
+├── requirements.txt                       <- Python dependencies
+├── .gitignore                             <- Ignores TEMP_DIR (downloads)
+└── README.md                              <- This file
 ```
 
 ### File Responsibilities
 
 | File | What It Does |
 |------|-------------|
-| mega_to_gdrive.py | Reads secrets, manages state, downloads via megadl (not mega.py), uploads to GDrive via rclone, per-file git push |
-| oversized_processor.py | Handles files >5GB: parses MEGA URL, extracts AES key, calculates chunks, downloads encrypted ranges via curl, decrypts with openssl, SHA256 verification, concatenation, ffprobe check, GDrive upload, artifact cleanup |
-| auto_trigger.py | Checks completed_links.json for remaining files; triggers next gh workflow run if needed; auto-stops when all folders complete |
-
-| mega_gdrive_transfer.yml | Defines GitHub Actions workflow: manual trigger, artifact steps, git backup, oversized processor, auto-trigger (skip on cancel) |
-| completed_links.json | Persistent state: tracks folders, completed files, current folder, oversized items (with per-video gdrive_status) |
-| chunks_history.json | Chunk-level state: per-video chunks (index, range, status, sha256, artifact_name), summary, processor version |
-| test_oversized.py | Comprehensive unit tests for oversized processor: chunk calculation, key extraction, state validation, artifact management |
-| MEGA_LINKS.json | Shorts folder links (example source for MEGA_LINKS secret) |
-| MEGA_LINKS_Documentry.json | Documentry folder links (example source) |
-| MEGA_LINKS_merged.json | Merged JSON from multiple text files — backup reference only. **Script does NOT read this file** — update the GitHub Secret instead |
-| .github/Shorts/MEGA_LINKS.txt | Raw text file for Shorts (one URL per line) |
-| .github/Documentry/MEGA_LINKS.txt | Raw text file for Documentry (one URL per line) |
-| .gitignore | Prevents TEMP_DIR/ download directory from being committed to git |
+| `mega_to_gdrive.py` | Reads MEGA_LINKS + RCLONE_CONF secrets, manages state, downloads via `megadl --path` (with `megadl --info` for metadata), uploads to GDrive via rclone, git push at run end/folder completion |
+| `oversized_processor.py` | Handles files >5GB: parses MEGA URL, extracts AES key, calculates chunks, downloads encrypted ranges via urllib, decrypts with openssl, SHA256 verification, concatenation, ffprobe check, GDrive upload, artifact cleanup |
+| `auto_trigger.py` | Checks completed_links.json + chunks_history.json for remaining files; triggers next `gh workflow run` if needed; auto-stops when all folders complete; prevents infinite loops via progress tracking |
+| `mega_gdrive_transfer.yml` | Defines GitHub Actions workflow: manual trigger + cron, installs megatools/mega.py/rclone/ffmpeg, runs mega_to_gdrive.py then oversized_processor.py, uploads artifacts, git backup, auto-trigger |
+| `completed_links.json` | Persistent state: tracks folders (pending/active/completed), completed files array (with status:uploaded or status:unupload for oversized), current folder, oversized metadata |
+| `chunks_history.json` | Chunk-level state: per-video chunks (index, range, status, sha256, artifact_name), summary, processor version |
+| `app.py` | FastAPI web app: local transfer runner, MEGA folder scanning, Google Drive OAuth device flow, rclone config generation |
+| `backend.py` | Flask backend: MEGA folder/file scanner API (async), CLI scan mode |
+| `mega_links_generator.html` | Web UI: paste MEGA links, organize by folder, generate minified JSON for GitHub Secret |
+| `test_oversized.py` | Unit tests for oversized processor: chunk calculation, key extraction, state validation |
+| `test_scan_local.py` | Unit tests for MEGA folder scanning |
+| `requirements.txt` | Python dependencies: fastapi, uvicorn, httpx, async-mega.py, apscheduler |
 
 ---
 
 ## Architecture Summary
 
 ```
-   ┌─────────────────────────────────────────────────────────────┐
-   │                    GITHUB ACTIONS RUNNER                    │
-   │                    (Ephemeral Linux VM)                     │
-   │                                                             │
-   │   ┌─────────────────────────────────────────────────────┐   │
-   │   │  WORKFLOW (mega_gdrive_transfer.yml)                 │   │
-   │   │                                                     │   │
-   │   │  1. Checkout repo                                   │   │
-   │   │  2. Install megatools + mega.py + rclone + ffmpeg   │   │
-   │   │  3. git pull (state from git)                       │   │
-   │   │                                                     │   │
-   │   │  ──── MAIN TRANSFER PHASE ────                      │   │
-   │   │  4. Run mega_to_gdrive.py                           │   │
-   │   │     (per-file git push, oversized detection)        │   │
-   │   │                                                     │   │
-   │   │  ──── OVERSIZED PHASE ────                          │   │
-   │   │  5. Install ffmpeg                                  │   │
-   │   │  6. Run oversized_processor.py                      │   │
-   │   │     → Download encrypted chunk from MEGA CDN         │   │
-   │   │     → Decrypt with openssl aes-128-ctr              │   │
-   │   │     → Upload chunk as artifact                      │   │
-   │   │     → OR: Download all artifacts → SHA256 verify    │   │
-   │   │     → Concatenate → ffprobe check                   │   │
-   │   │     → Upload to GDrive → Delete artifacts           │   │
-   │   │                                                     │   │
-   │   │  7. Upload artifacts (chunks, state files)          │   │
-   │   │  8. Git commit + push (final state backup)          │   │
-   │   │  9. Auto-trigger next cycle if files remain         │   │
-   │   └─────────────────────────────────────────────────────┘   │
-   │                             │                                │
-   │          ┌──────────────────┴──────────────────┐            │
-   │          │                                     │            │
-   │          v                                     v            │
-   │   ┌──────────────────┐            ┌────────────────────────┐│
-   │   │  mega_to_gdrive  │            │  oversized_processor   ││
-   │   │  (normal files)  │            │  (files >5GB)          ││
-   │   │                  │            │                        ││
-   │   │  Load state      │            │  Parse MEGA URL key    ││
-   │   │  Find folder     │            │  Extract AES key + IV  ││
-   │   │  Per file:       │            │  Calculate chunks      ││
-   │   │  ├─ get_metadata │            │  Per chunk:            ││
-   │   │  ├─ check oversized│         │  ├─ curl -r range      ││
-   │   │  ├─ check quota  │            │  ├─ openssl decrypt    ││
-   │   │  ├─ megadl dload │            │  ├─ SHA256 compute     ││
-   │   │  ├─ rclone upload│            │  ├─ upload artifact    ││
-   │   │  ├─ git push     │            │  Concat phase:         ││
-   │   │  └─ cleanup      │            │  ├─ download artifacts ││
-   │   │                  │            │  ├─ verify SHA256 each ││
-   │   │  Folder done? →  │            │  ├─ cat chunks → file  ││
-   │   │  auto-advance    │            │  ├─ ffprobe check      ││
-   │   └──────────────────┘            │  ├─ rclone upload      ││
-   │                                  │  └─ delete artifacts   ││
-   │                                  └────────────────────────┘│
-   └───────────────────────────┬─────────────────────────────────┘
-                               │
-           ┌───────────────────┴───────────────────┐
-           │                   │                   │
+   +-------------------------------------------------------------+
+   |                    GITHUB ACTIONS RUNNER                     |
+   |                    (Ephemeral Linux VM)                      |
+   |                                                             |
+   |   +-----------------------------------------------------+   |
+   |   |  WORKFLOW (mega_gdrive_transfer.yml)                 |   |
+   |   |                                                     |   |
+   |   |  1. Checkout repo (git checkout)                    |   |
+   |   |  2. Install megatools + mega.py + rclone + ffmpeg   |   |
+   |   |                                                     |   |
+   |   |  ---- MAIN TRANSFER PHASE ----                      |   |
+   |   |  3. Run mega_to_gdrive.py                           |   |
+   |   |     (megadl download, rclone upload,                |   |
+   |   |      oversized detection, state to memory)          |   |
+   |   |                                                     |   |
+   |   |  ---- OVERSIZED PHASE ----                          |   |
+   |   |  4. Run oversized_processor.py                      |   |
+   |   |     -> Download encrypted chunk from MEGA CDN       |   |
+   |   |     -> Decrypt with openssl aes-128-ctr             |   |
+   |   |     -> Upload chunk as artifact                     |   |
+   |   |     -> OR: Download all artifacts -> SHA256 verify  |   |
+   |   |     -> Concatenate -> ffprobe check                 |   |
+   |   |     -> Upload to GDrive -> Delete artifacts         |   |
+   |   |                                                     |   |
+   |   |  5. Upload artifacts (chunks, state files)          |   |
+   |   |  6. Git commit + push (state backup)                |   |
+   |   |  7. Auto-trigger next cycle if files remain         |   |
+   |   +-----------------------------------------------------+   |
+   |                             |                                |
+   |          +------------------+------------------+            |
+   |          |                                     |            |
+   |          v                                     v            |
+   |   +------------------+            +------------------------+|
+   |   |  mega_to_gdrive  |            |  oversized_processor   ||
+   |   |  (normal files)  |            |  (files >5GB)          ||
+   |   |                  |            |                        ||
+   |   |  Load state      |            |  Parse MEGA URL key    ||
+   |   |  Find folder     |            |  Extract AES key + IV  ||
+   |   |  Per file:       |            |  Calculate chunks      ||
+   |   |  +- megadl --info|            |  Per chunk:            ||
+   |   |  +- check over-  |            |  +- urllib Range       ||
+   |   |  |  sized        |            |  +- openssl decrypt    ||
+   |   |  +- check quota  |            |  +- SHA256 compute     ||
+   |   |  +- megadl dload |            |  +- upload artifact    ||
+   |   |  +- rclone upload|            |  Concat phase:         ||
+   |   |  +- save state   |            |  +- download artifacts ||
+   |   |  |  (in memory)  |            |  +- verify SHA256 each ||
+   |   |  +- cleanup      |            |  +- cat chunks -> file ||
+   |   |                  |            |  +- ffprobe check      ||
+   |   |  Folder done? -> |            |  +- rclone upload      ||
+   |   |  auto-advance    |            |  +- delete artifacts   ||
+   |   +------------------+            +------------------------+|
+   +---------------------------+---------------------------------+
+                               |
+           +-------------------+-------------------+
+           |                   |                   |
            v                   v                   v
    +---------------+   +---------------+   +-------------------+
    |  MEGA CLOUD   |   | GDRIVE CLOUD  |   | GITHUB REPO      |
    |               |   |               |   |  + ARTIFACTS     |
    |  Source via   |   |  Destination  |   |                  |
    |  megadl CLI   |   |  MEGA_Transfer|   | completed_links  |
-   |  OR curl -r   |   |  /{Folder}/   |   | chunks_history   |
+   |  OR urllib    |   |  /{Folder}/   |   | chunks_history   |
    |  (chunked)    |   |               |   | chunk artifacts  |
-   |  ~5GB quota   |   |               |   | per-file git     |
+   |  ~5GB quota   |   |               |   | per-run git      |
    |  per IP/day   |   |               |   |                  |
-    +---------------+   +---------------+   +-------------------+
+   +---------------+   +---------------+   +-------------------+
 ```
+
 ---
 
 ## License
 
 Free to use. Made by Shivam.
-
-
-
-
