@@ -31,6 +31,11 @@ def log(msg, end="\n"):
     print(msg, flush=True, end=end)
 
 
+def clean_filename(fname):
+    """Remove MEGA file IDs (bracket-enclosed 8-11 char alphanumeric) from filenames for cleaner logging."""
+    return re.sub(r'\s*\[[A-Za-z0-9_-]{8,11}\]\s*', ' ', fname).strip()
+
+
 def fmt_size(b):
     if b is None:
         return "unknown"
@@ -546,7 +551,7 @@ def auto_trigger_next():
 
 def process_concat_run(video, video_idx, state):
     log(f"\n{'=' * 55}")
-    log(f"  CONCAT RUN: {video['filename']}")
+    log(f"  CONCAT RUN: {clean_filename(video['filename'])}")
     log(f"{'=' * 55}")
 
     chunk_files = []
@@ -696,13 +701,13 @@ def process_concat_run(video, video_idx, state):
 
     state["videos"][video_idx]["status"] = "gdrive_uploaded"
     save_chunks_history(state)
-    log(f"  Video complete: {video['filename']}")
+    log(f"  Video complete: {clean_filename(video['filename'])}")
     return True
 
 
 def process_chunk_download(video, video_idx, chunk, state):
     idx = chunk["index"]
-    log(f"\n  --- Chunk {idx}/{len(video['chunks'])}: {video['filename']} ---")
+    log(f"\n  --- Chunk {idx}/{len(video['chunks'])}: {clean_filename(video['filename'])} ---")
     log(f"  Range: {fmt_size(chunk['start_byte'])} - {fmt_size(chunk['end_byte'])}")
 
     file_id, key_b64url = parse_mega_url(video["url"])
@@ -903,7 +908,14 @@ def main():
                             ch["status"] = "pending"
                             ch.pop("actual_size", None)
                             fixed = True
-            if fixed:
+            if v.get("gdrive_status") == "uploaded" and v.get("status") not in ("gdrive_uploaded", "done"):
+                log(f"  [fix] {clean_filename(v['filename'])} already uploaded to GDrive, cleaning up")
+                v["status"] = "done"
+                for ch in v.get("chunks", []):
+                    if ch.get("status") != "done":
+                        ch["status"] = "done"
+                save_chunks_history(state)
+            elif fixed:
                 v["status"] = "downloading"
                 save_chunks_history(state)
 
@@ -983,7 +995,7 @@ def main():
     while idx < len(videos):
         video = videos[idx]
         status = video.get("status", "pending")
-        log(f"\n  Current: [{idx+1}/{len(videos)}] {video['filename']} ({status})")
+        log(f"\n  Current: [{idx+1}/{len(videos)}] {clean_filename(video['filename'])} ({status})")
 
         if status == "gdrive_uploaded" or status == "done":
             idx += 1
@@ -992,7 +1004,7 @@ def main():
             continue
 
         if video.get("gdrive_status") == "uploaded":
-            log(f"  Already uploaded to GDrive, marking done")
+            log(f"  Already uploaded to GDrive, marking done: {clean_filename(video['filename'])}")
             video["status"] = "done"
             for ch in video.get("chunks", []):
                 if ch.get("status") != "done":
