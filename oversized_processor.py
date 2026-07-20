@@ -466,7 +466,7 @@ def upload_to_gdrive(filepath, target_folder):
     total = os.path.getsize(filepath)
     log(f"  Uploading {os.path.basename(filepath)} ({fmt_size(total)}) to GDrive...")
     proc = subprocess.Popen(
-        ["rclone", "copy", filepath, target, "--stats=2s", "--stats-json", "--stats-one-line"],
+        ["rclone", "copy", filepath, target],
         stderr=subprocess.PIPE, stdout=subprocess.DEVNULL, text=True, bufsize=1
     )
     collected = []
