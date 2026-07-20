@@ -53,11 +53,13 @@
           "start_byte": 4831838208,
           "end_byte": 5441127510,
           "expected_size": 609289303,
-          "status": "pending",
-          "artifact_name": "ck_cqcxhb4a_02"
+          "status": "done",
+          "artifact_name": "ck_cqcxhb4a_02",
+          "actual_size": 609289303,
+          "sha256": "dab32947b47732acea6474e755a379e33def30902f8ebeef57223011bb245269"
         }
       ],
-      "status": "downloading",
+      "status": "concat_ready",
       "gdrive_status": "pending"
     }
   ],
@@ -66,8 +68,8 @@
   "summary": {
     "total": 2,
     "gdrive_uploaded": 1,
-    "concat_ready": 0,
-    "downloading": 1,
+    "concat_ready": 1,
+    "downloading": 0,
     "pending": 0,
     "status": "in_progress"
   }
