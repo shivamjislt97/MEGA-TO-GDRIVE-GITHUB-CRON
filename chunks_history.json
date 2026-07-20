@@ -73,9 +73,8 @@
           "start_byte": 0,
           "end_byte": 5261334937,
           "expected_size": 5261334938,
-          "status": "done",
+          "status": "pending",
           "artifact_name": "ck_envwqrxa_01",
-          "actual_size": 5261334938,
           "sha256": "c8fcf80a8d9102974472f2ab0327d2ad66e588c7d85513b8a2b13be6e46d174f"
         },
         {
@@ -83,14 +82,13 @@
           "start_byte": 5261334938,
           "end_byte": 5963422838,
           "expected_size": 702087901,
-          "status": "done",
+          "status": "pending",
           "artifact_name": "ck_envwqrxa_02",
-          "actual_size": 702087901,
           "sha256": "e912cf444c1ecdd178eda3f1ce71838d2af55b388c34dd2ee8fd03e15cad6ced"
         }
       ],
-      "status": "gdrive_uploaded",
-      "gdrive_status": "uploaded"
+      "status": "downloading",
+      "gdrive_status": "pending"
     },
     {
       "url": "https://mega.nz/file/sNtEFZZZ#9i35XPpNCRrOY4xsSOYob7joHyWOCDmwJ1qTNdGX1Cc",
@@ -105,8 +103,10 @@
           "start_byte": 0,
           "end_byte": 5261334937,
           "expected_size": 5261334938,
-          "status": "pending",
-          "artifact_name": "ck_sntefzzz_01"
+          "status": "done",
+          "artifact_name": "ck_sntefzzz_01",
+          "actual_size": 5261334938,
+          "sha256": "a9a8daecd21ae244fb55b740333e3816641c93d7c2652d19d2fb35d94507fc92"
         },
         {
           "index": 2,
@@ -117,7 +117,7 @@
           "artifact_name": "ck_sntefzzz_02"
         }
       ],
-      "status": "pending",
+      "status": "downloading",
       "gdrive_status": "pending"
     }
   ],
@@ -125,10 +125,10 @@
   "version": 2,
   "summary": {
     "total": 4,
-    "gdrive_uploaded": 1,
+    "gdrive_uploaded": 0,
     "concat_ready": 0,
-    "downloading": 2,
-    "pending": 1,
+    "downloading": 4,
+    "pending": 0,
     "status": "in_progress"
   }
 }
