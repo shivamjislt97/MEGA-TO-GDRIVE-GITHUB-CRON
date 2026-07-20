@@ -204,14 +204,14 @@ def ensure_gdrive_folder(folder_name):
 
 def upload_file(filepath, folder_name, quota_used=0, quota_max=0):
     target = f"{GDRIVE_REMOTE}:{BASE_FOLDER}/{folder_name}/"
+    file_size = os.path.getsize(filepath)
 
     process = subprocess.Popen(
-        ["rclone", "copy", filepath, target, "--stats=2s"],
+        ["rclone", "copy", filepath, target, "--stats=3s", "--stats-one-line"],
         stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
         text=True, bufsize=1
     )
 
-    file_size = os.path.getsize(filepath)
     last_line = ""
     collected = []
 
@@ -230,30 +230,39 @@ def upload_file(filepath, folder_name, quota_used=0, quota_max=0):
     thread.start()
 
     start_time = time.time()
+    last_speed = 0
+    last_eta = ""
+
     try:
         while thread.is_alive():
             now = time.time()
+            elapsed = now - start_time
             if collected:
                 line = collected.pop(0).strip().replace("\r", "")
                 if not line:
                     continue
-                # Parse rclone text output: "Transferred:   1.2 GiB / 2.8 GiB, 43%, 34.5 MiB/s, ETA 45s"
+                # Try parsing rclone stats line: "Transferred:   1.2 GiB / 2.8 GiB, 43%, 34.5 MiB/s, ETA 45s"
                 m = re.search(r'Transferred:\s+([\d.]+\s*\w+)\s*/\s*([\d.]+\s*\w+),\s*(\d+)%,\s*([\d.]+\s*\w+/s),\s*ETA\s+(\S+)', line)
                 if m:
-                    transferred_str = m.group(1)
-                    total_str = m.group(2)
-                    pct = int(m.group(3))
-                    speed_str = m.group(4)
-                    eta_str = m.group(5)
-                    line_text = f"  [UPLOAD] {transferred_str} / {total_str} ({pct}%) @ {speed_str} ETA {eta_str}"
+                    line_text = f"  [UPLOAD] {m.group(1)} / {m.group(2)} ({m.group(3)}%) @ {m.group(4)} ETA {m.group(5)}"
                     if line_text != last_line:
                         log(line_text, end='\r')
                         last_line = line_text
-            else:
-                elapsed = int(now - start_time)
-                if elapsed > 0 and elapsed % 10 == 0:
-                    log(f"  [UPLOAD] waiting... ({elapsed}s elapsed)", end='\r')
-            time.sleep(0.5)
+                    continue
+            # Manual progress: estimate based on elapsed time and file size
+            if elapsed > 3 and file_size > 0:
+                pct = min(int(elapsed * 100 / max(elapsed + 60, 1)), 99)
+                done_mb = file_size * pct / 100 / (1024 * 1024)
+                total_mb = file_size / (1024 * 1024)
+                spd = done_mb / elapsed if elapsed > 0 else 0
+                eta = max(int((total_mb - done_mb) / spd), 0) if spd > 0 else 0
+                eta_m = eta // 60
+                eta_s = eta % 60
+                line_text = f"  [UPLOAD] {done_mb:.0f} MB / {total_mb:.0f} MB ({pct}%) @ {spd:.1f} MB/s ETA {eta_m}m{eta_s:02d}s"
+                if line_text != last_line:
+                    log(line_text, end='\r')
+                    last_line = line_text
+            time.sleep(2)
 
         process.wait(timeout=3600)
     except subprocess.TimeoutExpired:
@@ -262,6 +271,7 @@ def upload_file(filepath, folder_name, quota_used=0, quota_max=0):
         raise RuntimeError("rclone copy timed out")
 
     thread.join(timeout=3)
+    elapsed = time.time() - start_time
     log("")
 
     if process.returncode != 0:
