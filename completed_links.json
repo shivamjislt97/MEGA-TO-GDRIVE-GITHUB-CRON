@@ -37,13 +37,13 @@
     },
     "8": {
       "total": 5,
-      "done": 4,
-      "status": "active"
+      "done": 5,
+      "status": "completed"
     },
     "Bts Interview": {
       "total": 3,
       "done": 0,
-      "status": "pending"
+      "status": "active"
     },
     "E SPELCIAL": {
       "total": 6,
@@ -1480,9 +1480,17 @@
       "target_folder": "8",
       "completed_at": "2026-07-20T20:40:43Z",
       "status": "uploaded"
+    },
+    {
+      "url": "https://mega.nz/file/kdVFTY4J#nGazdWx-58ShVGZwjgBZuslCK3hC6b_9uGBonQacnIQ",
+      "filename": "EPORNER.COM - [qafIq4zupNF] Elsa Homework (2160).mp4",
+      "size": 3377355998,
+      "target_folder": "8",
+      "completed_at": "2026-07-20T20:49:37Z",
+      "status": "uploaded"
     }
   ],
-  "current_folder": "8",
+  "current_folder": "Bts Interview",
   "oversized": {
     "total": 0,
     "done": 0,
