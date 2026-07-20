@@ -2,7 +2,7 @@
   "folders": {
     "10": {
       "total": 4,
-      "done": 0,
+      "done": 1,
       "status": "active"
     },
     "1080p quality": {
@@ -166,7 +166,16 @@
       "status": "pending"
     }
   },
-  "completed": [],
+  "completed": [
+    {
+      "url": "https://mega.nz/file/5AlyHIbK#-YOjQzJAaohqsNd2TzfLo8VqbC_ujW74C_90DKrQ49M",
+      "filename": "EPORNER.COM - [83aLXGnCimq] Elsa Interracial (2160).mp4",
+      "size": 4819488969,
+      "target_folder": "10",
+      "completed_at": "2026-07-20T03:56:45Z",
+      "status": "uploaded"
+    }
+  ],
   "current_folder": "10",
   "oversized": {
     "total": 0,
