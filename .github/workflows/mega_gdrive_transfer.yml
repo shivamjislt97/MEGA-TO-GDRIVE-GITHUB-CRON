@@ -40,6 +40,15 @@ jobs:
       - name: Install rclone
         run: curl -s https://rclone.org/install.sh | sudo bash
 
+      - name: Debug rclone config
+        run: |
+          echo "=== rclone version ==="
+          rclone version
+          echo "=== rclone remotes ==="
+          rclone listremotes
+          echo "=== Testing gdrive access ==="
+          rclone lsd gdrive:MEGA_Transfer/ 2>&1 || echo "WARNING: gdrive remote not accessible - check RCLONE_CONF secret"
+
       - name: Run transfer
         env:
           MEGA_LINKS: ${{ secrets.MEGA_LINKS }}
@@ -86,17 +95,16 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add completed_links.json chunks_history.json
+          git add completed_links.json 2>/dev/null || true
+          [ -f chunks_history.json ] && git add chunks_history.json || true
           if ! git diff --staged --quiet; then
             git commit -m "update state [skip ci]"
           fi
           git pull --rebase origin main || true
-          git push
+          git push || echo "git push failed (non-fatal)"
 
       - name: Auto-trigger next if files remain
-        if: always()
+        if: success() || failure()
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: python auto_trigger.py
-
-
