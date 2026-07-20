@@ -1,0 +1,32 @@
+{
+  "folders": {
+    "Test": {
+      "total": 1,
+      "done": 0,
+      "status": "active"
+    },
+    "Small text": {
+      "total": 1,
+      "done": 0,
+      "status": "pending"
+    }
+  },
+  "completed": [
+    {
+      "url": "https://mega.nz/file/YE1TSIzS#tjBVSYTEfPczLInpdQbIhDNT8wAB3pj-cXxlpUgFD1M",
+      "filename": "EPORNER.COM - [Lbv99HWpOEf] Great Days - EJ (2160).mp4",
+      "size": 6436939029,
+      "target_folder": "Test",
+      "completed_at": "2026-07-20T07:08:45Z",
+      "status": "unupload",
+      "oversized": true
+    }
+  ],
+  "current_folder": "Test",
+  "oversized": {
+    "total": 0,
+    "done": 0,
+    "status": "completed",
+    "items": []
+  }
+}
