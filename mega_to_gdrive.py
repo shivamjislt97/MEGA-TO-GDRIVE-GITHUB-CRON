@@ -59,7 +59,7 @@ def git_push(quiet=False):
         )
         if r.returncode != 0 and "nothing to commit" not in r.stderr and "nothing to commit" not in r.stdout:
             if not quiet:
-                log(f"   ［git］ commit skipped: {r.stderr.strip() or r.stdout.strip()}")
+                log(f"   [git] commit skipped: {r.stderr.strip() or r.stdout.strip()}")
             return
         subprocess.run(
             ["git", "pull", "--rebase", "origin", "main"],
@@ -69,16 +69,16 @@ def git_push(quiet=False):
         if r.returncode != 0:
             err = r.stderr.strip() or r.stdout.strip()
             if not quiet:
-                log(f"   ［git］ push failed: {err}")
+                log(f"   [git] push failed: {err}")
             return
         if not quiet:
-            log("   ［git］ state pushed to repo")
+            log("   [git] state pushed to repo")
     except subprocess.TimeoutExpired:
         if not quiet:
-            log("   ［git］ timeout pushing state")
+            log("   [git] timeout pushing state")
     except Exception as e:
         if not quiet:
-                log(f"   ［git］ push error: {e}")
+                log(f"   [git] push error: {e}")
 
 
 def timestamp():
@@ -156,9 +156,9 @@ def download_file(url, timeout=600, quota_used=0, quota_max=0, total_size=0):
                     speed = cur_size / elapsed if elapsed > 0 else 0
                     if total_size > 0:
                         pct = min(100.0, cur_size * 100 / total_size)
-                        line_text = f"   ［DOWNLOAD］ {fmt_size(cur_size)} / {fmt_size(total_size)} ({pct:.0f}%) @ {fmt_size(speed)}/s | Quota: {fmt_size(quota_used + cur_size)}/{fmt_size(quota_max)}"
+                        line_text = f"   DOWNLOAD: {fmt_size(cur_size)} / {fmt_size(total_size)} ({pct:.0f}%) @ {fmt_size(speed)}/s | Quota: {fmt_size(quota_used + cur_size)}/{fmt_size(quota_max)}"
                     else:
-                        line_text = f"   ［DOWNLOAD］ {fmt_size(cur_size)} downloaded @ {fmt_size(speed)}/s | Quota: {fmt_size(quota_used + cur_size)}/{fmt_size(quota_max)}"
+                        line_text = f"   DOWNLOAD: {fmt_size(cur_size)} downloaded @ {fmt_size(speed)}/s | Quota: {fmt_size(quota_used + cur_size)}/{fmt_size(quota_max)}"
                     if line_text != last_line:
                         log(line_text, end='\r')
                         last_line = line_text
@@ -244,7 +244,7 @@ def upload_file(filepath, folder_name, quota_used=0, quota_max=0):
                 # Try parsing rclone stats line: "Transferred:   1.2 GiB / 2.8 GiB, 43%, 34.5 MiB/s, ETA 45s"
                 m = re.search(r'Transferred:\s+([\d.]+\s*\w+)\s*/\s*([\d.]+\s*\w+),\s*(\d+)%,\s*([\d.]+\s*\w+/s),\s*ETA\s+(\S+)', line)
                 if m:
-                    line_text = f"   ［UPLOAD］ {m.group(1)} / {m.group(2)} ({m.group(3)}%) @ {m.group(4)} ETA {m.group(5)}"
+                    line_text = f"   UPLOAD: {m.group(1)} / {m.group(2)} ({m.group(3)}%) @ {m.group(4)} ETA {m.group(5)}"
                     if line_text != last_line:
                         log(line_text, end='\r')
                         last_line = line_text
@@ -258,7 +258,7 @@ def upload_file(filepath, folder_name, quota_used=0, quota_max=0):
                 eta = max(int((total_mb - done_mb) / spd), 0) if spd > 0 else 0
                 eta_m = eta // 60
                 eta_s = eta % 60
-                line_text = f"   ［UPLOAD］ {done_mb:.0f} MB / {total_mb:.0f} MB ({pct}%) @ {spd:.1f} MB/s ETA {eta_m}m{eta_s:02d}s"
+                line_text = f"   UPLOAD: {done_mb:.0f} MB / {total_mb:.0f} MB ({pct}%) @ {spd:.1f} MB/s ETA {eta_m}m{eta_s:02d}s"
                 if line_text != last_line:
                     log(line_text, end='\r')
                     last_line = line_text
@@ -438,7 +438,7 @@ def main():
     log("-" * 55)
     for name, fdata in folders.items():
         icon = "ACTIVE" if fdata["status"] == "active" else "DONE" if fdata["status"] == "completed" else "WAIT"
-        log(f"   ［{icon}］ {name}: {fdata['done']}/{fdata['total']}")
+        log(f"  {icon}: {name}: {fdata['done']}/{fdata['total']}")
     log("-" * 55)
 
     processed_total = 0
@@ -473,13 +473,13 @@ def main():
             pending.append(url)
 
         total = len(pending)
-        log(f"\n  Active: ［{active_folder}］ -> {total} files pending")
+        log(f"\n  Active: Folder {active_folder} -> {total} files pending")
 
         if total == 0:
             # All files have entries in completed list — check if all are uploaded
             unupload_count = sum(1 for item in completed if item.get("target_folder") == active_folder and item.get("status") == "unupload")
             if unupload_count > 0:
-                log(f"   ［{active_folder}］ Waiting for {unupload_count} oversized uploads. Keeping active.")
+                log(f"   {active_folder}: Waiting for {unupload_count} oversized uploads. Keeping active.")
                 break  # oversized_processor will handle them
             folders[active_folder]["status"] = "completed"
             folders[active_folder]["done"] = folders[active_folder]["total"]
@@ -488,11 +488,11 @@ def main():
                 if fd["status"] == "pending":
                     fd["status"] = "active"
                     state["current_folder"] = name
-                    log(f"  Next folder activated: ［{name}］")
+                    log(f"  Next folder activated: {name}")
                     break
             else:
                 state["current_folder"] = None
-                log(f"  FOLDER DONE: ［{active_folder}］ — all files uploaded")
+                log(f"  FOLDER DONE: {active_folder} — all files uploaded")
             save_completed(state)
             completed_urls = set(item["url"] for item in completed)
             continue
@@ -502,14 +502,14 @@ def main():
         processed = 0
 
         for idx, url in enumerate(pending, 1):
-            log(f"  --- ［{idx}/{total}］ {active_folder} ---")
+            log(f"  --- {idx}/{total}: {active_folder} ---")
             log(f"  Fetching: {url[:60]}...")
 
             filename, file_size = get_file_info(url)
             metadata_ok = filename and file_size is not None
 
             if metadata_ok:
-                log(f"   ［{active_folder}］ \"{filename}\" | Size: {fmt_size(file_size)}")
+                log(f"   {active_folder}: \"{filename}\" | Size: {fmt_size(file_size)}")
                 if file_size > QUOTA_MAX:
                     log(f"  OVERSIZED: {filename} ({fmt_size(file_size)}) > 5GB — adding to pending oversized")
                     completed.append({
@@ -521,7 +521,7 @@ def main():
                     })
                     state["completed"] = completed
                     save_completed(state)
-                    log(f"   ［OVERSIZED］ Added to pending: {folders[active_folder]['done']}/{folders[active_folder]['total']} done, {sum(1 for c in completed if c.get('target_folder') == active_folder and c.get('status') == 'unupload')} oversized pending")
+                    log(f"   OVERSIZED: Added to pending: {folders[active_folder]['done']}/{folders[active_folder]['total']} done, {sum(1 for c in completed if c.get('target_folder') == active_folder and c.get('status') == 'unupload')} oversized pending")
                     continue
                 if quota_used + file_size > QUOTA_MAX:
                     log(f"  Quota full: {fmt_size(quota_used)} + {fmt_size(file_size)} > 5GB")
@@ -608,7 +608,7 @@ def main():
             folders[active_folder]["done"] += 1
             processed_total += 1
             shutil.rmtree(TEMP_DIR, ignore_errors=True)
-            log(f"   ［{idx}/{total}］ Complete | Quota: {fmt_size(quota_used)}/{fmt_size(QUOTA_MAX)}")
+            log(f"   {idx}/{total}: Complete | Quota: {fmt_size(quota_used)}/{fmt_size(QUOTA_MAX)}")
             log(f"  {'-' * 50}")
 
             if quota_exhausted:
@@ -623,7 +623,7 @@ def main():
         unupload_in_folder = sum(1 for item in completed if item.get("target_folder") == active_folder and item.get("status") == "unupload")
         if folder_done + unupload_in_folder >= folder_total:
             if unupload_in_folder > 0:
-                log(f"\n   ［{active_folder}］ All files detected. {folder_done}/{folder_total} uploaded, {unupload_in_folder} oversized pending.")
+                log(f"\n   {active_folder}: All files detected. {folder_done}/{folder_total} uploaded, {unupload_in_folder} oversized pending.")
                 log(f"  Keeping active for oversized processing.")
                 # Don't complete — oversized_processor will upload pending oversized files
                 state["folders"] = folders
@@ -633,14 +633,14 @@ def main():
                 break
             else:
                 fdata["status"] = "completed"
-                log(f"\n  FOLDER COMPLETE: ［{active_folder}］ — {fdata['done']}/{fdata['total']} all uploaded")
+                log(f"\n  FOLDER COMPLETE: {active_folder} — {fdata['done']}/{fdata['total']} all uploaded")
                 next_folder = None
                 for name, fd in folders.items():
                     if fd["status"] == "pending":
                         fd["status"] = "active"
                         state["current_folder"] = name
                         next_folder = name
-                        log(f"  >>> Activating next: ［{name}］")
+                        log(f"  >>> Activating next: {name}")
                         break
                 if next_folder:
                     completed_urls = set(item["url"] for item in completed)
@@ -657,7 +657,7 @@ def main():
                     all_done_now = True
                     log(f"  ALL FOLDERS COMPLETE! Sab kaam ho gaya!")
         else:
-            log(f"\n   ［{active_folder}］ Progress: {fdata['done']}/{fdata['total']}")
+            log(f"\n   {active_folder}: Progress: {fdata['done']}/{fdata['total']}")
             break
 
         state["folders"] = folders
@@ -678,7 +678,7 @@ def main():
     log(f"  Processed: {processed_total} files")
     for name, fd in folders.items():
         icon = "DONE" if fd["status"] == "completed" else "ACTIVE" if fd["status"] == "active" else "WAIT"
-        log(f"   ［{icon}］ {name}: {fd['done']}/{fd['total']}")
+        log(f"  {icon}: {name}: {fd['done']}/{fd['total']}")
     oversized_pending = sum(1 for item in completed if item.get("status") == "unupload")
     if oversized_pending:
         log(f"  OVERSIZED (>5GB): {oversized_pending} files pending upload")

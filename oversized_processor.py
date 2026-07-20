@@ -134,7 +134,7 @@ def get_file_metadata(file_id, aes_key_hex):
         filename = m.group(1) if m else None
         return filename, int(resp.get("s", 0))
     except Exception as e:
-        log(f"  [warn] metadata fetch failed: {e}")
+        log(f"  warn: metadata fetch failed: {e}")
         return None, None
 
 
@@ -186,8 +186,8 @@ def download_chunk(raw_url, aes_key_hex, iv_nonce_hex, start_byte, end_byte, out
                             percent = downloaded * 100 / total_size
                             speed = downloaded / elapsed if elapsed > 0 else 0
                             log(
-                                f"  [DOWNLOAD] {fmt_size(downloaded)} / {fmt_size(total_size)} "
-                                f"({percent:.0f}%) @ {fmt_size(speed)}/s "
+f"  DOWNLOAD: {fmt_size(downloaded)} / {fmt_size(total_size)} "
+f"({percent:.0f}%) @ {fmt_size(speed)}/s "
                                 f"| Quota: {fmt_size(downloaded)}/{fmt_size(QUOTA_LIMIT)}",
                                 end="\r"
                             )
@@ -346,7 +346,7 @@ def download_artifact(artifact_name, output_dir="."):
                         pct = downloaded * 100 / total_size if total_size else 0
                         speed = downloaded / elapsed if elapsed > 0 else 0
                         log(
-                            f"  [DOWNLOAD] {fmt_size(downloaded)} / {fmt_size(total_size)} "
+                            f"  DOWNLOAD: {fmt_size(downloaded)} / {fmt_size(total_size)} "
                             f"({pct:.0f}%) @ {fmt_size(speed)}/s",
                             end="\r"
                         )
@@ -366,7 +366,7 @@ def download_artifact(artifact_name, output_dir="."):
         with zipfile.ZipFile(zip_path) as zf:
             zf.extractall(output_dir)
     except Exception as e:
-        log(f"  [warn] zip extract failed: {e}")
+        log(f"  warn: zip extract failed: {e}")
         if os.path.exists(zip_path):
             os.remove(zip_path)
         return False
@@ -380,7 +380,7 @@ def download_artifact(artifact_name, output_dir="."):
 def delete_artifact(artifact_name):
     repo = os.environ.get("GITHUB_REPOSITORY", "")
     if not repo:
-        log(f"  [warn] delete_artifact: no GITHUB_REPOSITORY")
+        log(f"  warn: delete_artifact: no GITHUB_REPOSITORY")
         return False
     r = subprocess.run(
         ["gh", "api",
@@ -399,7 +399,7 @@ def delete_artifact(artifact_name):
             capture_output=True, timeout=30
         )
         if sub.returncode != 0:
-            log(f"  [warn] delete artifact {artifact_name} id={aid} failed: {sub.stderr[:100]}")
+            log(f"  warn: delete artifact {artifact_name} id={aid} failed: {sub.stderr[:100]}")
         else:
             log(f"  Deleted artifact {artifact_name}")
     return True
@@ -489,7 +489,7 @@ def upload_to_gdrive(filepath, target_folder):
                 continue
             m = re.search(r'Transferred:\s+([\d.]+\s*\w+)\s*/\s*([\d.]+\s*\w+),\s*(\d+)%,\s*([\d.]+\s*\w+/s),\s*ETA\s+(\S+)', line)
             if m:
-                line_text = f"  [UPLOAD] {m.group(1)} / {m.group(2)} ({m.group(3)}%) @ {m.group(4)} ETA {m.group(5)}"
+                line_text = f"  UPLOAD: {m.group(1)} / {m.group(2)} ({m.group(3)}%) @ {m.group(4)} ETA {m.group(5)}"
                 if line_text != last_line:
                     log(line_text, end="\r")
                     last_line = line_text
@@ -504,7 +504,7 @@ def upload_to_gdrive(filepath, target_folder):
             eta = max(int((total_mb - done_mb) / spd), 0) if spd > 0 else 0
             eta_m = eta // 60
             eta_s = eta % 60
-            line_text = f"  [UPLOAD] {done_mb:.0f} MB / {total_mb:.0f} MB ({pct}%) @ {spd:.1f} MB/s ETA {eta_m}m{eta_s:02d}s"
+            line_text = f"  UPLOAD: {done_mb:.0f} MB / {total_mb:.0f} MB ({pct}%) @ {spd:.1f} MB/s ETA {eta_m}m{eta_s:02d}s"
             if line_text != last_line:
                 log(line_text, end="\r")
                 last_line = line_text
@@ -603,7 +603,7 @@ def process_concat_run(video, video_idx, state):
                     out.write(buf)
                     concat_done += len(buf)
                     log(
-                        f"  [CONCAT] [{i}/{total_chunks}] {fmt_size(concat_done)} / {fmt_size(concat_total)} "
+                        f"  CONCAT: {i}/{total_chunks} {fmt_size(concat_done)} / {fmt_size(concat_total)} "
                         f"({concat_done * 100 // concat_total}%)",
                         end="\r"
                     )
@@ -821,9 +821,9 @@ def print_summary(state):
         log(f"\n  {'=' * 45}")
         log(f"  OVERSIZED SUMMARY: {len(uploaded)}/{total} uploaded to GDrive")
         for it in unupload:
-            log(f"    [  unupload  ] {clean_filename(it.get('filename', '?'))}")
+            log(f"    PENDING: {clean_filename(it.get('filename', '?'))}")
         for it in uploaded:
-            log(f"    [  uploaded  ] {clean_filename(it.get('filename', '?'))}")
+            log(f"    UPLOADED: {clean_filename(it.get('filename', '?'))}")
         log(f"  {'=' * 45}")
 
 
@@ -904,12 +904,12 @@ def main():
                     if aname:
                         aid = find_artifact_id(aname)
                         if not aid:
-                            log(f"  [fix] Artifact {aname} missing — resetting chunk {ch['index']} to pending")
+                            log(f"  fix: Artifact {aname} missing — resetting chunk {ch['index']} to pending")
                             ch["status"] = "pending"
                             ch.pop("actual_size", None)
                             fixed = True
             if v.get("gdrive_status") == "uploaded" and v.get("status") not in ("gdrive_uploaded", "done"):
-                log(f"  [fix] {clean_filename(v['filename'])} already uploaded to GDrive, cleaning up")
+                log(f"  fix: {clean_filename(v['filename'])} already uploaded to GDrive, cleaning up")
                 v["status"] = "done"
                 for ch in v.get("chunks", []):
                     if ch.get("status") != "done":
