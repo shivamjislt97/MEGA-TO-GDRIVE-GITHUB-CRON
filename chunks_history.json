@@ -83,11 +83,13 @@
           "start_byte": 5261334938,
           "end_byte": 5963422838,
           "expected_size": 702087901,
-          "status": "pending",
-          "artifact_name": "ck_envwqrxa_02"
+          "status": "done",
+          "artifact_name": "ck_envwqrxa_02",
+          "actual_size": 702087901,
+          "sha256": "e912cf444c1ecdd178eda3f1ce71838d2af55b388c34dd2ee8fd03e15cad6ced"
         }
       ],
-      "status": "downloading",
+      "status": "concat_ready",
       "gdrive_status": "pending"
     },
     {
@@ -124,8 +126,8 @@
   "summary": {
     "total": 4,
     "gdrive_uploaded": 0,
-    "concat_ready": 0,
-    "downloading": 3,
+    "concat_ready": 1,
+    "downloading": 2,
     "pending": 1,
     "status": "in_progress"
   }
