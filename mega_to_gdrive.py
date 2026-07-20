@@ -503,6 +503,19 @@ def main():
             except RuntimeError as e:
                 msg = str(e)
                 if is_quota(msg):
+                    if not metadata_ok:
+                        log(f"\n  QUOTA EXCEEDED + no metadata — likely >5GB file. Marking as oversized.")
+                        completed.append({
+                            "url": url, "filename": f"unknown_{url.split('/')[-1].split('#')[0][:12]}.mp4",
+                            "size": 0, "target_folder": active_folder,
+                            "completed_at": timestamp(),
+                            "status": "unupload",
+                            "oversized": True
+                        })
+                        state["completed"] = completed
+                        save_completed(state)
+                        shutil.rmtree(TEMP_DIR, ignore_errors=True)
+                        continue
                     log(f"\n  QUOTA EXCEEDED mid-download! Stopping.")
                     log(f"  {processed} files done this run.")
                     break
