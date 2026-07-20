@@ -821,9 +821,9 @@ def print_summary(state):
         log(f"\n  {'=' * 45}")
         log(f"  OVERSIZED SUMMARY: {len(uploaded)}/{total} uploaded to GDrive")
         for it in unupload:
-            log(f"    [  unupload  ] {it.get('filename', '?')}")
+            log(f"    [  unupload  ] {clean_filename(it.get('filename', '?'))}")
         for it in uploaded:
-            log(f"    [  uploaded  ] {it.get('filename', '?')}")
+            log(f"    [  uploaded  ] {clean_filename(it.get('filename', '?'))}")
         log(f"  {'=' * 45}")
 
 
