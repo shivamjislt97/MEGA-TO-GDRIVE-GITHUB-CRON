@@ -23,11 +23,13 @@
           "start_byte": 4831838208,
           "end_byte": 6436939028,
           "expected_size": 1605100821,
-          "status": "pending",
-          "artifact_name": "ck_ye1tsizs_02"
+          "status": "done",
+          "artifact_name": "ck_ye1tsizs_02",
+          "actual_size": 1605100821,
+          "sha256": "f6172749ef8da40fd6e943b21254a7da8766b3728b5ff09038b383ad27a0254e"
         }
       ],
-      "status": "downloading",
+      "status": "concat_ready",
       "gdrive_status": "pending"
     }
   ],
@@ -36,8 +38,8 @@
   "summary": {
     "total": 1,
     "gdrive_uploaded": 0,
-    "concat_ready": 0,
-    "downloading": 1,
+    "concat_ready": 1,
+    "downloading": 0,
     "pending": 0,
     "status": "in_progress"
   }
