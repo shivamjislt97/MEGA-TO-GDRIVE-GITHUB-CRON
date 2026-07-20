@@ -71,9 +71,12 @@ try:
 except Exception:
     pass
 
-# Stop re-triggering if no progress for too many runs (but only if we've uploaded something before)
-if no_progress_count >= MAX_NO_PROGRESS_RUNS and uploaded_count > 0:
-    print(f'STOPPED: No progress for {no_progress_count} runs ({uploaded_count} uploaded). Fix rclone config/MEGA connectivity.')
+# Stop re-triggering if no progress for too many runs
+# If some files were uploaded before: stop after 3 runs with no new uploads
+# If zero files ever uploaded: stop after 5 runs (likely config/connection issue)
+max_runs = MAX_NO_PROGRESS_RUNS if uploaded_count > 0 else 5
+if no_progress_count >= max_runs:
+    print(f'STOPPED: No progress for {no_progress_count} runs ({uploaded_count} uploaded total). Check rclone config / RCLONE_CONF secret / Google Drive connectivity.')
     sys.exit(0)
 
 if remaining > 0:

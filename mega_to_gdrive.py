@@ -531,7 +531,6 @@ def main():
                     log(f"  Processing this file anyway (already downloaded), then stopping.")
 
             quota_exhausted = (quota_used + file_size) >= QUOTA_MAX
-            quota_used += file_size
 
             ul_start = time.time()
             log(f"  UPLOADING: \"{filename}\" ({fmt_size(file_size)}) to GDrive/{BASE_FOLDER}/{active_folder}/...")
@@ -544,6 +543,8 @@ def main():
                 log(f"  Upload failed: {str(e)[:200]}")
                 shutil.rmtree(TEMP_DIR, ignore_errors=True)
                 continue
+
+            quota_used += file_size
 
             completed.append({
                 "url": url,
