@@ -510,6 +510,14 @@ def upload_to_gdrive(filepath, target_folder):
     log("")
     if proc.returncode != 0:
         raise RuntimeError(f"rclone upload failed (exit {proc.returncode})")
+    # Clean up rclone temp files (tmp*.bin, tmp*.enc etc) from GDrive
+    try:
+        subprocess.run(
+            ["rclone", "delete", target, "--include", "tmp*", "--min-age", "1m"],
+            capture_output=True, timeout=60
+        )
+    except Exception:
+        pass
     log(f"  Uploaded to GDrive: {BASE_FOLDER}/{target_folder}/")
     return os.path.basename(filepath)
 
@@ -807,10 +815,40 @@ def print_summary(state):
         log(f"  {'=' * 45}")
 
 
+def cleanup_gdrive_temps():
+    """Remove rclone temp files (tmp*) from all GDrive folders."""
+    try:
+        result = subprocess.run(
+            ["rclone", "lsd", f"{GDRIVE_REMOTE}:{BASE_FOLDER}/"],
+            capture_output=True, text=True, timeout=30
+        )
+        if result.returncode == 0:
+            for line in result.stdout.strip().split("\n"):
+                if not line.strip():
+                    continue
+                # Extract folder name from rclone lsd output
+                parts = line.strip().split()
+                if parts:
+                    folder = parts[-1]
+                    target = f"{GDRIVE_REMOTE}:{BASE_FOLDER}/{folder}/"
+                    try:
+                        subprocess.run(
+                            ["rclone", "delete", target, "--include", "tmp*", "--min-age", "1m"],
+                            capture_output=True, timeout=60
+                        )
+                    except Exception:
+                        pass
+    except Exception:
+        pass
+
+
 def main():
     log("=" * 55)
     log(f"  Oversized Processor | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     log("=" * 55)
+
+    # Clean up any rclone temp files from previous runs
+    cleanup_gdrive_temps()
 
     completed_state = load_completed()
     unupload_items = get_unupload_items(completed_state)

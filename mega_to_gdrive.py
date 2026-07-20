@@ -278,6 +278,15 @@ def upload_file(filepath, folder_name, quota_used=0, quota_max=0):
         err_lines = [l.strip() for l in collected if l.strip() and not l.strip().startswith('{')]
         err_detail = err_lines[-3:] if err_lines else []
         raise RuntimeError(f"rclone copy exit {process.returncode}: {chr(59).join(err_detail)}")
+    # Clean up rclone temp files (tmp*) from GDrive
+    target = f"{GDRIVE_REMOTE}:{BASE_FOLDER}/{folder_name}/"
+    try:
+        subprocess.run(
+            ["rclone", "delete", target, "--include", "tmp*", "--min-age", "1m"],
+            capture_output=True, timeout=60
+        )
+    except Exception:
+        pass
     return os.path.basename(filepath)
 
 
@@ -299,6 +308,32 @@ def verify_upload(filename, file_size, folder_name):
     return False
 
 
+def cleanup_gdrive_temps():
+    """Remove rclone temp files (tmp*) from all GDrive folders."""
+    try:
+        result = subprocess.run(
+            ["rclone", "lsd", f"{GDRIVE_REMOTE}:{BASE_FOLDER}/"],
+            capture_output=True, text=True, timeout=30
+        )
+        if result.returncode == 0:
+            for line in result.stdout.strip().split("\n"):
+                if not line.strip():
+                    continue
+                parts = line.strip().split()
+                if parts:
+                    folder = parts[-1]
+                    target = f"{GDRIVE_REMOTE}:{BASE_FOLDER}/{folder}/"
+                    try:
+                        subprocess.run(
+                            ["rclone", "delete", target, "--include", "tmp*", "--min-age", "1m"],
+                            capture_output=True, timeout=60
+                        )
+                    except Exception:
+                        pass
+    except Exception:
+        pass
+
+
 def main():
     # Setup rclone config
     conf_dir = os.path.expanduser("~/.config/rclone")
@@ -311,6 +346,10 @@ def main():
         f.write(RCLONE_CONF_RAW)
     log("  rclone.conf written")
     r = subprocess.run(["rclone", "listremotes"], capture_output=True, text=True, timeout=10)
+    log(f"  rclone remotes: {r.stdout.strip() or '(none)'}")
+
+    # Clean up any rclone temp files from previous runs
+    cleanup_gdrive_temps()
     log(f"  rclone remotes: {r.stdout.strip() or '(none)'}")
 
     # Load artifact state
