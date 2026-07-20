@@ -113,11 +113,13 @@
           "start_byte": 5261334938,
           "end_byte": 6639617871,
           "expected_size": 1378282934,
-          "status": "pending",
-          "artifact_name": "ck_sntefzzz_02"
+          "status": "done",
+          "artifact_name": "ck_sntefzzz_02",
+          "actual_size": 1378282934,
+          "sha256": "54f948df53e79b715deb863dd267e6838fd8dbf8612c67762b6ac0a980a5be4c"
         }
       ],
-      "status": "downloading",
+      "status": "concat_ready",
       "gdrive_status": "pending"
     }
   ],
@@ -126,8 +128,8 @@
   "summary": {
     "total": 4,
     "gdrive_uploaded": 0,
-    "concat_ready": 0,
-    "downloading": 4,
+    "concat_ready": 1,
+    "downloading": 3,
     "pending": 0,
     "status": "in_progress"
   }
