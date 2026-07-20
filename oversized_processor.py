@@ -772,7 +772,7 @@ def set_gdrive_uploaded(video_url):
 
 
 def sync_gdrive_status(ch_state, completed_state):
-    """Copy status from completed list into each video in chunks_history."""
+    """Sync gdrive_status from completed list, but only set uploaded if chunks are fully processed."""
     unupload_items = get_unupload_items(completed_state)
     url_to_status = {it["url"]: "pending" for it in unupload_items}
     uploaded_items = [it for it in completed_state.get("completed", []) if it.get("status") == "uploaded"]
@@ -780,8 +780,15 @@ def sync_gdrive_status(ch_state, completed_state):
         url_to_status[it["url"]] = "uploaded"
     for v in ch_state.get("videos", []):
         url = v.get("url", "")
-        if url in url_to_status:
-            v["gdrive_status"] = url_to_status[url]
+        if url not in url_to_status:
+            continue
+        desired = url_to_status[url]
+        if desired == "uploaded":
+            all_chunks_done = all(ch.get("status") == "done" for ch in v.get("chunks", []))
+            if not all_chunks_done:
+                v["gdrive_status"] = "pending"
+                continue
+        v["gdrive_status"] = desired
 
 
 def add_chunks_summary(state):
@@ -979,6 +986,17 @@ def main():
         log(f"\n  Current: [{idx+1}/{len(videos)}] {video['filename']} ({status})")
 
         if status == "gdrive_uploaded" or status == "done":
+            idx += 1
+            state["current_index"] = idx
+            save_chunks_history(state)
+            continue
+
+        if video.get("gdrive_status") == "uploaded":
+            log(f"  Already uploaded to GDrive, marking done")
+            video["status"] = "done"
+            for ch in video.get("chunks", []):
+                if ch.get("status") != "done":
+                    ch["status"] = "done"
             idx += 1
             state["current_index"] = idx
             save_chunks_history(state)
