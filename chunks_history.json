@@ -28,7 +28,7 @@
         }
       ],
       "status": "downloading",
-      "gdrive_status": "uploaded"
+      "gdrive_status": "pending"
     },
     {
       "url": "https://mega.nz/file/cQcxHb4A#9F3R4X9slO6L4LyTxpkRByUhtXCZ2NRWrwYtGU2iOAc",
@@ -43,9 +43,8 @@
           "start_byte": 0,
           "end_byte": 4831838207,
           "expected_size": 4831838208,
-          "status": "done",
+          "status": "pending",
           "artifact_name": "ck_cqcxhb4a_01",
-          "actual_size": 4831838208,
           "sha256": "848020f47700b84076c139c8655dd93fc91ade7b2198105c42a6a30917717ab9"
         },
         {
@@ -53,24 +52,81 @@
           "start_byte": 4831838208,
           "end_byte": 5441127510,
           "expected_size": 609289303,
-          "status": "done",
+          "status": "pending",
           "artifact_name": "ck_cqcxhb4a_02",
-          "actual_size": 609289303,
           "sha256": "dab32947b47732acea6474e755a379e33def30902f8ebeef57223011bb245269"
         }
       ],
-      "status": "gdrive_uploaded",
-      "gdrive_status": "uploaded"
+      "status": "downloading",
+      "gdrive_status": "pending"
+    },
+    {
+      "url": "https://mega.nz/file/ENVwQRxA#7dl5ETfrS6TI4gRz4r11YTvQZXJCzz3cnTGTUiKjgGQ",
+      "filename": "EPORNER.COM - [4cA3r6fYnbz] Elsa Rest (2160).mp4",
+      "target_folder": "E SPELCIAL",
+      "file_id": "ENVwQRxA",
+      "total_size": 5963422839,
+      "total_chunks": 2,
+      "chunks": [
+        {
+          "index": 1,
+          "start_byte": 0,
+          "end_byte": 5261334937,
+          "expected_size": 5261334938,
+          "status": "done",
+          "artifact_name": "ck_envwqrxa_01",
+          "actual_size": 5261334938,
+          "sha256": "c8fcf80a8d9102974472f2ab0327d2ad66e588c7d85513b8a2b13be6e46d174f"
+        },
+        {
+          "index": 2,
+          "start_byte": 5261334938,
+          "end_byte": 5963422838,
+          "expected_size": 702087901,
+          "status": "pending",
+          "artifact_name": "ck_envwqrxa_02"
+        }
+      ],
+      "status": "downloading",
+      "gdrive_status": "pending"
+    },
+    {
+      "url": "https://mega.nz/file/sNtEFZZZ#9i35XPpNCRrOY4xsSOYob7joHyWOCDmwJ1qTNdGX1Cc",
+      "filename": "EPORNER.COM - [IDVyjWEZTUG] Elsa Threesome (2160).mp4",
+      "target_folder": "E SPELCIAL",
+      "file_id": "sNtEFZZZ",
+      "total_size": 6639617872,
+      "total_chunks": 2,
+      "chunks": [
+        {
+          "index": 1,
+          "start_byte": 0,
+          "end_byte": 5261334937,
+          "expected_size": 5261334938,
+          "status": "pending",
+          "artifact_name": "ck_sntefzzz_01"
+        },
+        {
+          "index": 2,
+          "start_byte": 5261334938,
+          "end_byte": 6639617871,
+          "expected_size": 1378282934,
+          "status": "pending",
+          "artifact_name": "ck_sntefzzz_02"
+        }
+      ],
+      "status": "pending",
+      "gdrive_status": "pending"
     }
   ],
   "current_index": 2,
   "version": 2,
   "summary": {
-    "total": 2,
-    "gdrive_uploaded": 2,
+    "total": 4,
+    "gdrive_uploaded": 0,
     "concat_ready": 0,
-    "downloading": 0,
-    "pending": 0,
-    "status": "completed"
+    "downloading": 3,
+    "pending": 1,
+    "status": "in_progress"
   }
 }
