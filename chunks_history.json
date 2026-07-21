@@ -203,11 +203,13 @@
           "start_byte": 5261334938,
           "end_byte": 5939515951,
           "expected_size": 678181014,
-          "status": "pending",
-          "artifact_name": "ck_wicu3kod_02"
+          "status": "done",
+          "artifact_name": "ck_wicu3kod_02",
+          "actual_size": 678181014,
+          "sha256": "ab1941ca2f87a4987b182c3b4461b904a0516574147b89276124d8797889370b"
         }
       ],
-      "status": "downloading",
+      "status": "concat_ready",
       "gdrive_status": "pending"
     }
   ],
@@ -216,8 +218,8 @@
   "summary": {
     "total": 7,
     "gdrive_uploaded": 0,
-    "concat_ready": 0,
-    "downloading": 7,
+    "concat_ready": 1,
+    "downloading": 6,
     "pending": 0,
     "status": "in_progress"
   }
