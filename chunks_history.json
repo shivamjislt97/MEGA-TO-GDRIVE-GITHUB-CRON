@@ -133,9 +133,8 @@
           "start_byte": 0,
           "end_byte": 5261334937,
           "expected_size": 5261334938,
-          "status": "done",
+          "status": "pending",
           "artifact_name": "ck_lcvigyys_01",
-          "actual_size": 5261334938,
           "sha256": "6d4d2dc080f61cb2a42af2f817004d8427ace80be1479c1569840c9983a8dae8"
         },
         {
@@ -143,24 +142,81 @@
           "start_byte": 5261334938,
           "end_byte": 6168633496,
           "expected_size": 907298559,
-          "status": "done",
+          "status": "pending",
           "artifact_name": "ck_lcvigyys_02",
-          "actual_size": 907298559,
           "sha256": "d6f3e9a491bba2b04b2918ee55b51e04cdf24b4b7fb0ed279eac5227f8eb6028"
         }
       ],
-      "status": "gdrive_uploaded",
-      "gdrive_status": "uploaded"
+      "status": "downloading",
+      "gdrive_status": "pending"
+    },
+    {
+      "url": "https://mega.nz/file/0ddnlDJT#2mBES2dL859gvedHiaLm044bkGUXSrzMSHGlbmI82g0",
+      "filename": "EPORNER.COM - [bcSOrVyxayr] Elsa Fanboy Dad Finally Fucks Webcam Nanny (2160) (1).mp4",
+      "target_folder": "Elsa Jean SPY FAM 4K",
+      "file_id": "0ddnlDJT",
+      "total_size": 5939515952,
+      "total_chunks": 2,
+      "chunks": [
+        {
+          "index": 1,
+          "start_byte": 0,
+          "end_byte": 5261334937,
+          "expected_size": 5261334938,
+          "status": "done",
+          "artifact_name": "ck_0ddnldjt_01",
+          "actual_size": 5261334938,
+          "sha256": "25c5d02872c1fb78e91ade832fbea1da192e0b9c77f58c7e680092fd58ddc27a"
+        },
+        {
+          "index": 2,
+          "start_byte": 5261334938,
+          "end_byte": 5939515951,
+          "expected_size": 678181014,
+          "status": "pending",
+          "artifact_name": "ck_0ddnldjt_02"
+        }
+      ],
+      "status": "downloading",
+      "gdrive_status": "pending"
+    },
+    {
+      "url": "https://mega.nz/file/wIcU3KoD#NrRYPB9gJj0XulfynZNvAiPaA2lA1EONr8ZhExB5ov4",
+      "filename": "EPORNER.COM - [bcSOrVyxayr] Elsa Fanboy Dad Finally Fucks Webcam Nanny (2160).mp4",
+      "target_folder": "Elsa Jean SPY FAM 4K",
+      "file_id": "wIcU3KoD",
+      "total_size": 5939515952,
+      "total_chunks": 2,
+      "chunks": [
+        {
+          "index": 1,
+          "start_byte": 0,
+          "end_byte": 5261334937,
+          "expected_size": 5261334938,
+          "status": "pending",
+          "artifact_name": "ck_wicu3kod_01"
+        },
+        {
+          "index": 2,
+          "start_byte": 5261334938,
+          "end_byte": 5939515951,
+          "expected_size": 678181014,
+          "status": "pending",
+          "artifact_name": "ck_wicu3kod_02"
+        }
+      ],
+      "status": "pending",
+      "gdrive_status": "pending"
     }
   ],
   "current_index": 5,
   "version": 2,
   "summary": {
-    "total": 5,
-    "gdrive_uploaded": 1,
+    "total": 7,
+    "gdrive_uploaded": 0,
     "concat_ready": 0,
-    "downloading": 4,
-    "pending": 0,
+    "downloading": 6,
+    "pending": 1,
     "status": "in_progress"
   }
 }
