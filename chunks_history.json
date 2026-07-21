@@ -163,9 +163,8 @@
           "start_byte": 0,
           "end_byte": 5261334937,
           "expected_size": 5261334938,
-          "status": "done",
+          "status": "pending",
           "artifact_name": "ck_0ddnldjt_01",
-          "actual_size": 5261334938,
           "sha256": "25c5d02872c1fb78e91ade832fbea1da192e0b9c77f58c7e680092fd58ddc27a"
         },
         {
@@ -173,14 +172,13 @@
           "start_byte": 5261334938,
           "end_byte": 5939515951,
           "expected_size": 678181014,
-          "status": "done",
+          "status": "pending",
           "artifact_name": "ck_0ddnldjt_02",
-          "actual_size": 678181014,
           "sha256": "763e7e13d3073b54ffbbbb5880ad197db9d46ca4f89b8b2bd061082bf3aeda4a"
         }
       ],
-      "status": "gdrive_uploaded",
-      "gdrive_status": "uploaded"
+      "status": "downloading",
+      "gdrive_status": "pending"
     },
     {
       "url": "https://mega.nz/file/wIcU3KoD#NrRYPB9gJj0XulfynZNvAiPaA2lA1EONr8ZhExB5ov4",
@@ -195,8 +193,10 @@
           "start_byte": 0,
           "end_byte": 5261334937,
           "expected_size": 5261334938,
-          "status": "pending",
-          "artifact_name": "ck_wicu3kod_01"
+          "status": "done",
+          "artifact_name": "ck_wicu3kod_01",
+          "actual_size": 5261334938,
+          "sha256": "25c5d02872c1fb78e91ade832fbea1da192e0b9c77f58c7e680092fd58ddc27a"
         },
         {
           "index": 2,
@@ -207,7 +207,7 @@
           "artifact_name": "ck_wicu3kod_02"
         }
       ],
-      "status": "pending",
+      "status": "downloading",
       "gdrive_status": "pending"
     }
   ],
@@ -215,10 +215,10 @@
   "version": 2,
   "summary": {
     "total": 7,
-    "gdrive_uploaded": 1,
+    "gdrive_uploaded": 0,
     "concat_ready": 0,
-    "downloading": 5,
-    "pending": 1,
+    "downloading": 7,
+    "pending": 0,
     "status": "in_progress"
   }
 }
