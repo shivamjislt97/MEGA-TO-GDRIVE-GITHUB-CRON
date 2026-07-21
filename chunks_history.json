@@ -253,9 +253,8 @@
           "start_byte": 0,
           "end_byte": 5261334937,
           "expected_size": 5261334938,
-          "status": "done",
+          "status": "pending",
           "artifact_name": "ck_wr91fl5a_01",
-          "actual_size": 5261334938,
           "sha256": "285a84000aed4cbc0fa6f1b63c076c4ffad3c2dad3396dd41c1e17d1b219b270"
         },
         {
@@ -263,14 +262,13 @@
           "start_byte": 5261334938,
           "end_byte": 8639465356,
           "expected_size": 3378130419,
-          "status": "done",
+          "status": "pending",
           "artifact_name": "ck_wr91fl5a_02",
-          "actual_size": 3378130419,
           "sha256": "e2c47aa32708645a7b555ffd797ce2dfe4aa255179b55f2b1e50679b22f00e0d"
         }
       ],
-      "status": "gdrive_uploaded",
-      "gdrive_status": "uploaded"
+      "status": "downloading",
+      "gdrive_status": "pending"
     },
     {
       "url": "https://mega.nz/file/9EVjTDgQ#v-cvbDBgqKhQGGkBJk09i_nehgqxjlieKHT_NVTakyI",
@@ -285,8 +283,10 @@
           "start_byte": 0,
           "end_byte": 5261334937,
           "expected_size": 5261334938,
-          "status": "pending",
-          "artifact_name": "ck_9evjtdgq_01"
+          "status": "done",
+          "artifact_name": "ck_9evjtdgq_01",
+          "actual_size": 5261334938,
+          "sha256": "b778a61d551a8b9ae245ccf7b0837a1e58240ef56c20e5464707868106246280"
         },
         {
           "index": 2,
@@ -297,7 +297,7 @@
           "artifact_name": "ck_9evjtdgq_02"
         }
       ],
-      "status": "pending",
+      "status": "downloading",
       "gdrive_status": "pending"
     }
   ],
@@ -305,10 +305,10 @@
   "version": 2,
   "summary": {
     "total": 10,
-    "gdrive_uploaded": 1,
+    "gdrive_uploaded": 0,
     "concat_ready": 0,
-    "downloading": 8,
-    "pending": 1,
+    "downloading": 10,
+    "pending": 0,
     "status": "in_progress"
   }
 }
