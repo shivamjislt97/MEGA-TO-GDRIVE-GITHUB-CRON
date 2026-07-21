@@ -239,16 +239,16 @@
           "sha256": "ac627058dc6e29fb2ea2574e3ef267184d7227538f5b3597dda81d646c4d41ab"
         }
       ],
-      "status": "concat_ready",
-      "gdrive_status": "pending"
+      "status": "gdrive_uploaded",
+      "gdrive_status": "uploaded"
     }
   ],
-  "current_index": 7,
+  "current_index": 8,
   "version": 2,
   "summary": {
     "total": 8,
-    "gdrive_uploaded": 0,
-    "concat_ready": 1,
+    "gdrive_uploaded": 1,
+    "concat_ready": 0,
     "downloading": 7,
     "pending": 0,
     "status": "in_progress"
