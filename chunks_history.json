@@ -143,11 +143,13 @@
           "start_byte": 5261334938,
           "end_byte": 6168633496,
           "expected_size": 907298559,
-          "status": "pending",
-          "artifact_name": "ck_lcvigyys_02"
+          "status": "done",
+          "artifact_name": "ck_lcvigyys_02",
+          "actual_size": 907298559,
+          "sha256": "d6f3e9a491bba2b04b2918ee55b51e04cdf24b4b7fb0ed279eac5227f8eb6028"
         }
       ],
-      "status": "downloading",
+      "status": "concat_ready",
       "gdrive_status": "pending"
     }
   ],
@@ -156,8 +158,8 @@
   "summary": {
     "total": 5,
     "gdrive_uploaded": 0,
-    "concat_ready": 0,
-    "downloading": 5,
+    "concat_ready": 1,
+    "downloading": 4,
     "pending": 0,
     "status": "in_progress"
   }
