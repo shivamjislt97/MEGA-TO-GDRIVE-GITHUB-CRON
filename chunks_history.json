@@ -193,9 +193,8 @@
           "start_byte": 0,
           "end_byte": 5261334937,
           "expected_size": 5261334938,
-          "status": "done",
+          "status": "pending",
           "artifact_name": "ck_wicu3kod_01",
-          "actual_size": 5261334938,
           "sha256": "25c5d02872c1fb78e91ade832fbea1da192e0b9c77f58c7e680092fd58ddc27a"
         },
         {
@@ -203,23 +202,52 @@
           "start_byte": 5261334938,
           "end_byte": 5939515951,
           "expected_size": 678181014,
-          "status": "done",
+          "status": "pending",
           "artifact_name": "ck_wicu3kod_02",
-          "actual_size": 678181014,
           "sha256": "ab1941ca2f87a4987b182c3b4461b904a0516574147b89276124d8797889370b"
         }
       ],
-      "status": "gdrive_uploaded",
-      "gdrive_status": "uploaded"
+      "status": "downloading",
+      "gdrive_status": "pending"
+    },
+    {
+      "url": "https://mega.nz/file/0Z8QDIyJ#uAR3Jjt_wFZetWzPyXBu26fazH4RoGN39_WmrHsqhLA",
+      "filename": "EPORNER.COM Elsa Jean VR Friends - [Q7xrpl4feDl]  (2160) (1).mp4",
+      "target_folder": "Elsa Jean VR new",
+      "file_id": "0Z8QDIyJ",
+      "total_size": 5449692539,
+      "total_chunks": 2,
+      "chunks": [
+        {
+          "index": 1,
+          "start_byte": 0,
+          "end_byte": 5261334937,
+          "expected_size": 5261334938,
+          "status": "done",
+          "artifact_name": "ck_0z8qdiyj_01",
+          "actual_size": 5261334938,
+          "sha256": "26189b078679b4907c1477eb88bfa782a8a32ce3d5e75f212e57cfe54a387d5d"
+        },
+        {
+          "index": 2,
+          "start_byte": 5261334938,
+          "end_byte": 5449692538,
+          "expected_size": 188357601,
+          "status": "pending",
+          "artifact_name": "ck_0z8qdiyj_02"
+        }
+      ],
+      "status": "downloading",
+      "gdrive_status": "pending"
     }
   ],
   "current_index": 7,
   "version": 2,
   "summary": {
-    "total": 7,
-    "gdrive_uploaded": 1,
+    "total": 8,
+    "gdrive_uploaded": 0,
     "concat_ready": 0,
-    "downloading": 6,
+    "downloading": 8,
     "pending": 0,
     "status": "in_progress"
   }
