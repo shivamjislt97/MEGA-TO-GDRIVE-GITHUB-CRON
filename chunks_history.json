@@ -173,11 +173,13 @@
           "start_byte": 5261334938,
           "end_byte": 5939515951,
           "expected_size": 678181014,
-          "status": "pending",
-          "artifact_name": "ck_0ddnldjt_02"
+          "status": "done",
+          "artifact_name": "ck_0ddnldjt_02",
+          "actual_size": 678181014,
+          "sha256": "763e7e13d3073b54ffbbbb5880ad197db9d46ca4f89b8b2bd061082bf3aeda4a"
         }
       ],
-      "status": "downloading",
+      "status": "concat_ready",
       "gdrive_status": "pending"
     },
     {
@@ -214,8 +216,8 @@
   "summary": {
     "total": 7,
     "gdrive_uploaded": 0,
-    "concat_ready": 0,
-    "downloading": 6,
+    "concat_ready": 1,
+    "downloading": 5,
     "pending": 1,
     "status": "in_progress"
   }
