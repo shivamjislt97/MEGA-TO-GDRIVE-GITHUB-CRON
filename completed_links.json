@@ -52,7 +52,7 @@
     },
     "E-New": {
       "total": 13,
-      "done": 10,
+      "done": 11,
       "status": "active"
     },
     "Elsa BTS + INTERVIEW": {
@@ -1650,6 +1650,14 @@
       "size": 449838728,
       "target_folder": "E-New",
       "completed_at": "2026-07-21T00:40:54Z",
+      "status": "uploaded"
+    },
+    {
+      "url": "https://mega.nz/file/JElhTIgK#roFCH859c54FoxpTZb5xvpJGtVZpfR4925cVRQBN3Ug",
+      "filename": "elsa-jean sister 2_1080p.mp4",
+      "size": 824946105,
+      "target_folder": "E-New",
+      "completed_at": "2026-07-21T00:54:56Z",
       "status": "uploaded"
     }
   ],
