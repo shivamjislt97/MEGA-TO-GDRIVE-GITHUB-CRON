@@ -87,7 +87,7 @@
     },
     "Elsa jean ATK FOLDERS": {
       "total": 104,
-      "done": 12,
+      "done": 13,
       "status": "active"
     },
     "Elsa jean ATK FOLDERS/ATK": {
@@ -2252,8 +2252,8 @@
       "filename": "atkgirlfriends hawaii 1.8 -elsa-jane-04-4k_2160p.mp4",
       "size": 8639465357,
       "target_folder": "Elsa jean ATK FOLDERS",
-      "completed_at": "2026-07-21T10:59:38Z",
-      "status": "unupload",
+      "completed_at": "2026-07-21T12:22:40Z",
+      "status": "uploaded",
       "oversized": true
     },
     {
