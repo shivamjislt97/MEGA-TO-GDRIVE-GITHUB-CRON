@@ -295,8 +295,8 @@
           "expected_size": 1372680147,
           "status": "done",
           "artifact_name": "ck_9evjtdgq_02",
-          "actual_size": 1372680147,
-          "sha256": "cf51486afdc86c2fa4463d0d73b957cc8bdf0fe67a6c76d3bb8f6305abf77a04"
+          "sha256": "cf51486afdc86c2fa4463d0d73b957cc8bdf0fe67a6c76d3bb8f6305abf77a04",
+          "actual_size": 1372680147
         }
       ],
       "status": "concat_ready",
