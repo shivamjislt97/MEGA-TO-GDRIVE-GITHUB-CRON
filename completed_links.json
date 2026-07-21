@@ -87,13 +87,13 @@
     },
     "Elsa jean ATK FOLDERS": {
       "total": 104,
-      "done": 103,
-      "status": "active"
+      "done": 104,
+      "status": "completed"
     },
     "Elsa jean ATK FOLDERS/ATK": {
       "total": 29,
       "done": 0,
-      "status": "pending"
+      "status": "active"
     },
     "Elsa jean ATK FOLDERS/Elsa Jean Lasvegas Part 2": {
       "total": 2,
@@ -3048,9 +3048,17 @@
       "target_folder": "Elsa jean ATK FOLDERS",
       "completed_at": "2026-07-21T16:57:34Z",
       "status": "uploaded"
+    },
+    {
+      "url": "https://mega.nz/file/8UMXADpA#MAZktyhe3_kSzxYiWBpHWjTbGqc4Q-zJG4Lx4qshJmw",
+      "filename": "wild-reprieve_1440p.mp4",
+      "size": 1847301229,
+      "target_folder": "Elsa jean ATK FOLDERS",
+      "completed_at": "2026-07-21T17:04:27Z",
+      "status": "uploaded"
     }
   ],
-  "current_folder": "Elsa jean ATK FOLDERS",
+  "current_folder": "Elsa jean ATK FOLDERS/ATK",
   "oversized": {
     "total": 0,
     "done": 0,
