@@ -179,8 +179,8 @@
           "sha256": "763e7e13d3073b54ffbbbb5880ad197db9d46ca4f89b8b2bd061082bf3aeda4a"
         }
       ],
-      "status": "concat_ready",
-      "gdrive_status": "pending"
+      "status": "gdrive_uploaded",
+      "gdrive_status": "uploaded"
     },
     {
       "url": "https://mega.nz/file/wIcU3KoD#NrRYPB9gJj0XulfynZNvAiPaA2lA1EONr8ZhExB5ov4",
@@ -211,12 +211,12 @@
       "gdrive_status": "pending"
     }
   ],
-  "current_index": 5,
+  "current_index": 6,
   "version": 2,
   "summary": {
     "total": 7,
-    "gdrive_uploaded": 0,
-    "concat_ready": 1,
+    "gdrive_uploaded": 1,
+    "concat_ready": 0,
     "downloading": 5,
     "pending": 1,
     "status": "in_progress"
