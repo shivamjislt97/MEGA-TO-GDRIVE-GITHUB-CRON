@@ -269,18 +269,46 @@
           "sha256": "e2c47aa32708645a7b555ffd797ce2dfe4aa255179b55f2b1e50679b22f00e0d"
         }
       ],
-      "status": "concat_ready",
+      "status": "gdrive_uploaded",
+      "gdrive_status": "uploaded"
+    },
+    {
+      "url": "https://mega.nz/file/9EVjTDgQ#v-cvbDBgqKhQGGkBJk09i_nehgqxjlieKHT_NVTakyI",
+      "filename": "atkgirlfriends-elsa-jane-13-4k_2160p.mp4",
+      "target_folder": "Elsa jean ATK FOLDERS",
+      "file_id": "9EVjTDgQ",
+      "total_size": 6634015085,
+      "total_chunks": 2,
+      "chunks": [
+        {
+          "index": 1,
+          "start_byte": 0,
+          "end_byte": 5261334937,
+          "expected_size": 5261334938,
+          "status": "pending",
+          "artifact_name": "ck_9evjtdgq_01"
+        },
+        {
+          "index": 2,
+          "start_byte": 5261334938,
+          "end_byte": 6634015084,
+          "expected_size": 1372680147,
+          "status": "pending",
+          "artifact_name": "ck_9evjtdgq_02"
+        }
+      ],
+      "status": "pending",
       "gdrive_status": "pending"
     }
   ],
-  "current_index": 8,
+  "current_index": 9,
   "version": 2,
   "summary": {
-    "total": 9,
-    "gdrive_uploaded": 0,
-    "concat_ready": 1,
+    "total": 10,
+    "gdrive_uploaded": 1,
+    "concat_ready": 0,
     "downloading": 8,
-    "pending": 0,
+    "pending": 1,
     "status": "in_progress"
   }
 }
