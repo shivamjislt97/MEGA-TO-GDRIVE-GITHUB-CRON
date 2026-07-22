@@ -83,11 +83,13 @@
           "start_byte": 5261334938,
           "end_byte": 5602341592,
           "expected_size": 341006655,
-          "status": "pending",
-          "artifact_name": "ck_rfdntyos_02"
+          "status": "done",
+          "artifact_name": "ck_rfdntyos_02",
+          "actual_size": 341006655,
+          "sha256": "09409724598a581a00c3e1a0d5f396855e89872a47877f56416d1de69ef96606"
         }
       ],
-      "status": "downloading",
+      "status": "concat_ready",
       "gdrive_status": "pending"
     }
   ],
@@ -96,8 +98,8 @@
   "summary": {
     "total": 3,
     "gdrive_uploaded": 0,
-    "concat_ready": 0,
-    "downloading": 3,
+    "concat_ready": 1,
+    "downloading": 2,
     "pending": 0,
     "status": "in_progress"
   }
