@@ -23,11 +23,13 @@
           "start_byte": 5261334938,
           "end_byte": 5633778819,
           "expected_size": 372443882,
-          "status": "pending",
-          "artifact_name": "ck_dqmmkd5r_02"
+          "status": "done",
+          "artifact_name": "ck_dqmmkd5r_02",
+          "actual_size": 372443882,
+          "sha256": "0c0f08c9e91246196ea49cb3d6ca91d883c2fff3ef353d65d778fdf91028dc44"
         }
       ],
-      "status": "downloading",
+      "status": "concat_ready",
       "gdrive_status": "pending"
     }
   ],
@@ -36,8 +38,8 @@
   "summary": {
     "total": 1,
     "gdrive_uploaded": 0,
-    "concat_ready": 0,
-    "downloading": 1,
+    "concat_ready": 1,
+    "downloading": 0,
     "pending": 0,
     "status": "in_progress"
   }
