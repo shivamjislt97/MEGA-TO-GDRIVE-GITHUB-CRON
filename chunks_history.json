@@ -59,18 +59,46 @@
           "actual_size": 319822161
         }
       ],
-      "status": "concat_ready",
+      "status": "gdrive_uploaded",
+      "gdrive_status": "uploaded"
+    },
+    {
+      "url": "https://mega.nz/file/RFdnTYoS#DWS4uNE0oP-qnwOgAOC4LXfgaFjV2dg6XI9JRMGMm8E",
+      "filename": "daddy princess.mp4",
+      "target_folder": "Elsa jean love 1 2",
+      "file_id": "RFdnTYoS",
+      "total_size": 5602341593,
+      "total_chunks": 2,
+      "chunks": [
+        {
+          "index": 1,
+          "start_byte": 0,
+          "end_byte": 5261334937,
+          "expected_size": 5261334938,
+          "status": "pending",
+          "artifact_name": "ck_rfdntyos_01"
+        },
+        {
+          "index": 2,
+          "start_byte": 5261334938,
+          "end_byte": 5602341592,
+          "expected_size": 341006655,
+          "status": "pending",
+          "artifact_name": "ck_rfdntyos_02"
+        }
+      ],
+      "status": "pending",
       "gdrive_status": "pending"
     }
   ],
-  "current_index": 1,
+  "current_index": 2,
   "version": 2,
   "summary": {
-    "total": 2,
-    "gdrive_uploaded": 0,
-    "concat_ready": 1,
+    "total": 3,
+    "gdrive_uploaded": 1,
+    "concat_ready": 0,
     "downloading": 1,
-    "pending": 0,
+    "pending": 1,
     "status": "in_progress"
   }
 }
