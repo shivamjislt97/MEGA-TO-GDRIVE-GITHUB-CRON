@@ -53,11 +53,13 @@
           "start_byte": 5261334938,
           "end_byte": 5581157098,
           "expected_size": 319822161,
-          "status": "pending",
-          "artifact_name": "ck_ercvgi4a_02"
+          "status": "done",
+          "artifact_name": "ck_ercvgi4a_02",
+          "actual_size": 319822161,
+          "sha256": "3b6f3134bd48c9d9fe3487724cd541cccdf637f63c39ace05ee6a033e51a9b09"
         }
       ],
-      "status": "downloading",
+      "status": "concat_ready",
       "gdrive_status": "pending"
     }
   ],
@@ -66,8 +68,8 @@
   "summary": {
     "total": 2,
     "gdrive_uploaded": 0,
-    "concat_ready": 0,
-    "downloading": 2,
+    "concat_ready": 1,
+    "downloading": 1,
     "pending": 0,
     "status": "in_progress"
   }
