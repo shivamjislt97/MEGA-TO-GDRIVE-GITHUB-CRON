@@ -43,9 +43,8 @@
           "start_byte": 0,
           "end_byte": 5261334937,
           "expected_size": 5261334938,
-          "status": "done",
+          "status": "pending",
           "artifact_name": "ck_ercvgi4a_01",
-          "actual_size": 5261334938,
           "sha256": "96df0d0e7f1352b61991b738290c8785715cf6973e3713e5629c634e1afe52aa"
         },
         {
@@ -53,14 +52,13 @@
           "start_byte": 5261334938,
           "end_byte": 5581157098,
           "expected_size": 319822161,
-          "status": "done",
+          "status": "pending",
           "artifact_name": "ck_ercvgi4a_02",
-          "sha256": "3b6f3134bd48c9d9fe3487724cd541cccdf637f63c39ace05ee6a033e51a9b09",
-          "actual_size": 319822161
+          "sha256": "3b6f3134bd48c9d9fe3487724cd541cccdf637f63c39ace05ee6a033e51a9b09"
         }
       ],
-      "status": "gdrive_uploaded",
-      "gdrive_status": "uploaded"
+      "status": "downloading",
+      "gdrive_status": "pending"
     },
     {
       "url": "https://mega.nz/file/RFdnTYoS#DWS4uNE0oP-qnwOgAOC4LXfgaFjV2dg6XI9JRMGMm8E",
@@ -75,8 +73,10 @@
           "start_byte": 0,
           "end_byte": 5261334937,
           "expected_size": 5261334938,
-          "status": "pending",
-          "artifact_name": "ck_rfdntyos_01"
+          "status": "done",
+          "artifact_name": "ck_rfdntyos_01",
+          "actual_size": 5261334938,
+          "sha256": "48b3dff3c29d0c87118b9fccda54b00b1bf44cec41b3680a6da99f167865e3a3"
         },
         {
           "index": 2,
@@ -87,7 +87,7 @@
           "artifact_name": "ck_rfdntyos_02"
         }
       ],
-      "status": "pending",
+      "status": "downloading",
       "gdrive_status": "pending"
     }
   ],
@@ -95,10 +95,10 @@
   "version": 2,
   "summary": {
     "total": 3,
-    "gdrive_uploaded": 1,
+    "gdrive_uploaded": 0,
     "concat_ready": 0,
-    "downloading": 1,
-    "pending": 1,
+    "downloading": 3,
+    "pending": 0,
     "status": "in_progress"
   }
 }
