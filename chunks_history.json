@@ -1,0 +1,44 @@
+{
+  "videos": [
+    {
+      "url": "https://mega.nz/file/dQMmkD5R#BkQ4_GmWoBJpZEDtbBXhJOEDl277Zaqb3yyG1nNCagM",
+      "filename": "EPORNER.COM - [govP0UZf3ZP] Fuck The Eee (2160).mp4",
+      "target_folder": "Elsa jean eporner m2",
+      "file_id": "dQMmkD5R",
+      "total_size": 5633778820,
+      "total_chunks": 2,
+      "chunks": [
+        {
+          "index": 1,
+          "start_byte": 0,
+          "end_byte": 5261334937,
+          "expected_size": 5261334938,
+          "status": "done",
+          "artifact_name": "ck_dqmmkd5r_01",
+          "actual_size": 5261334938,
+          "sha256": "c4d95fe6f61ab4dabfc0cfb57891779bd8a23b842ee550f8343526fceeb21577"
+        },
+        {
+          "index": 2,
+          "start_byte": 5261334938,
+          "end_byte": 5633778819,
+          "expected_size": 372443882,
+          "status": "pending",
+          "artifact_name": "ck_dqmmkd5r_02"
+        }
+      ],
+      "status": "downloading",
+      "gdrive_status": "pending"
+    }
+  ],
+  "current_index": 0,
+  "version": 2,
+  "summary": {
+    "total": 1,
+    "gdrive_uploaded": 0,
+    "concat_ready": 0,
+    "downloading": 1,
+    "pending": 0,
+    "status": "in_progress"
+  }
+}
