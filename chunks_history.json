@@ -55,8 +55,8 @@
           "expected_size": 319822161,
           "status": "done",
           "artifact_name": "ck_ercvgi4a_02",
-          "actual_size": 319822161,
-          "sha256": "3b6f3134bd48c9d9fe3487724cd541cccdf637f63c39ace05ee6a033e51a9b09"
+          "sha256": "3b6f3134bd48c9d9fe3487724cd541cccdf637f63c39ace05ee6a033e51a9b09",
+          "actual_size": 319822161
         }
       ],
       "status": "concat_ready",
