@@ -97,13 +97,13 @@
     },
     "Terminal/2.65x faster and 2.27x": {
       "total": 2,
-      "done": 0,
-      "status": "active"
+      "done": 2,
+      "status": "completed"
     },
     "Terminal/2.65x faster and 2.27x/TRYED TO FIX SPEED": {
       "total": 2,
       "done": 0,
-      "status": "pending"
+      "status": "active"
     },
     "Twopornstars": {
       "total": 29,
@@ -2020,9 +2020,25 @@
       "target_folder": "Terminal",
       "completed_at": "2026-07-23T02:29:43Z",
       "status": "uploaded"
+    },
+    {
+      "url": "https://mega.nz/file/4JMFEIjB#-E8zGjbZ-cjSwtG6y3LLKlJwfgRbjhlTrk3IBJNNBbg",
+      "filename": "FaceSwap_blackmail_part1_FINAL.mp4",
+      "size": 102907823,
+      "target_folder": "Terminal/2.65x faster and 2.27x",
+      "completed_at": "2026-07-23T02:30:12Z",
+      "status": "uploaded"
+    },
+    {
+      "url": "https://mega.nz/file/AYUymIjb#qzNUs8WUe_uC1RpWUoTiHjfPEqx0lFVtBufZz3M2SNI",
+      "filename": "FaceSwap_blackmail_part2_2.75x.mp4",
+      "size": 403728123,
+      "target_folder": "Terminal/2.65x faster and 2.27x",
+      "completed_at": "2026-07-23T02:30:52Z",
+      "status": "uploaded"
     }
   ],
-  "current_folder": "Terminal/2.65x faster and 2.27x",
+  "current_folder": "Terminal/2.65x faster and 2.27x/TRYED TO FIX SPEED",
   "oversized": {
     "total": 0,
     "done": 0,
