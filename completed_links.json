@@ -102,7 +102,7 @@
     },
     "Terminal/2.65x faster and 2.27x/TRYED TO FIX SPEED": {
       "total": 2,
-      "done": 0,
+      "done": 1,
       "status": "active"
     },
     "Twopornstars": {
@@ -2035,6 +2035,14 @@
       "size": 403728123,
       "target_folder": "Terminal/2.65x faster and 2.27x",
       "completed_at": "2026-07-23T02:30:52Z",
+      "status": "uploaded"
+    },
+    {
+      "url": "https://mega.nz/file/0F9BBIJS#rbYPrIr0qp7ka_VZE1vt_6oXi140hazQRKP2Pd4uyD4",
+      "filename": "part2_VIDEO_ONLY_SMOOTH.mp4",
+      "size": 763450570,
+      "target_folder": "Terminal/2.65x faster and 2.27x/TRYED TO FIX SPEED",
+      "completed_at": "2026-07-23T02:32:53Z",
       "status": "uploaded"
     }
   ],
