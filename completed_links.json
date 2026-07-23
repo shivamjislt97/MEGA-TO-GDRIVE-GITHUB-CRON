@@ -92,13 +92,13 @@
     },
     "Terminal": {
       "total": 2,
-      "done": 0,
-      "status": "active"
+      "done": 2,
+      "status": "completed"
     },
     "Terminal/2.65x faster and 2.27x": {
       "total": 2,
       "done": 0,
-      "status": "pending"
+      "status": "active"
     },
     "Terminal/2.65x faster and 2.27x/TRYED TO FIX SPEED": {
       "total": 2,
@@ -2004,9 +2004,25 @@
       "target_folder": "Elsa pussy 2",
       "completed_at": "2026-07-23T02:24:58Z",
       "status": "uploaded"
+    },
+    {
+      "url": "https://mega.nz/file/hNMgxThJ#Kd18wSIoCqLqfYC4omwfrcdGHK1mGz0OY2Gh96aBY4Q",
+      "filename": "part1_VIDEO_ONLY_SMOOTH.mp4",
+      "size": 163760083,
+      "target_folder": "Terminal",
+      "completed_at": "2026-07-23T02:25:49Z",
+      "status": "uploaded"
+    },
+    {
+      "url": "https://mega.nz/file/lEMAwZiK#GxYMj1lSElOCGr_l4oqtxFSquOMDifkY24h22H1e1Qc",
+      "filename": "final_blackmail.mp4",
+      "size": 3401679887,
+      "target_folder": "Terminal",
+      "completed_at": "2026-07-23T02:29:43Z",
+      "status": "uploaded"
     }
   ],
-  "current_folder": "Terminal",
+  "current_folder": "Terminal/2.65x faster and 2.27x",
   "oversized": {
     "total": 0,
     "done": 0,
