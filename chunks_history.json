@@ -73,9 +73,8 @@
           "start_byte": 0,
           "end_byte": 5261334937,
           "expected_size": 5261334938,
-          "status": "done",
+          "status": "pending",
           "artifact_name": "ck_rfdntyos_01",
-          "actual_size": 5261334938,
           "sha256": "48b3dff3c29d0c87118b9fccda54b00b1bf44cec41b3680a6da99f167865e3a3"
         },
         {
@@ -83,24 +82,109 @@
           "start_byte": 5261334938,
           "end_byte": 5602341592,
           "expected_size": 341006655,
-          "status": "done",
+          "status": "pending",
           "artifact_name": "ck_rfdntyos_02",
-          "actual_size": 341006655,
           "sha256": "09409724598a581a00c3e1a0d5f396855e89872a47877f56416d1de69ef96606"
         }
       ],
-      "status": "gdrive_uploaded",
-      "gdrive_status": "uploaded"
+      "status": "downloading",
+      "gdrive_status": "pending"
+    },
+    {
+      "url": "https://mega.nz/file/kUU0wQ6Q#3cKudXCvFerCY1eZDTG6zJ1X7Nc1m4B0xcANpOIny8I",
+      "filename": "Blackmailing The Nanny 3 Streaming Video On Demand Adult Empire.mp4",
+      "target_folder": "adultdvdempire 1",
+      "file_id": "kUU0wQ6Q",
+      "total_size": 5630307273,
+      "total_chunks": 2,
+      "chunks": [
+        {
+          "index": 1,
+          "start_byte": 0,
+          "end_byte": 5261334937,
+          "expected_size": 5261334938,
+          "status": "done",
+          "artifact_name": "ck_kuu0wq6q_01",
+          "actual_size": 5261334938,
+          "sha256": "381c5f26a778347b7b90f3ef24ae764524d7127e444cd7b50c9ea73f83baacfe"
+        },
+        {
+          "index": 2,
+          "start_byte": 5261334938,
+          "end_byte": 5630307272,
+          "expected_size": 368972335,
+          "status": "pending",
+          "artifact_name": "ck_kuu0wq6q_02"
+        }
+      ],
+      "status": "downloading",
+      "gdrive_status": "pending"
+    },
+    {
+      "url": "https://mega.nz/file/kUU0wQ6Q#3cKudXCvFerCY1eZDTG6zJ1X7Nc1m4B0xcANpOIny8I",
+      "filename": "Blackmailing The Nanny 3 Streaming Video On Demand Adult Empire.mp4",
+      "target_folder": "adultdvdempire 1",
+      "file_id": "kUU0wQ6Q",
+      "total_size": 5630307273,
+      "total_chunks": 2,
+      "chunks": [
+        {
+          "index": 1,
+          "start_byte": 0,
+          "end_byte": 5261334937,
+          "expected_size": 5261334938,
+          "status": "pending",
+          "artifact_name": "ck_kuu0wq6q_01"
+        },
+        {
+          "index": 2,
+          "start_byte": 5261334938,
+          "end_byte": 5630307272,
+          "expected_size": 368972335,
+          "status": "pending",
+          "artifact_name": "ck_kuu0wq6q_02"
+        }
+      ],
+      "status": "pending",
+      "gdrive_status": "pending"
+    },
+    {
+      "url": "https://mega.nz/file/kUU0wQ6Q#3cKudXCvFerCY1eZDTG6zJ1X7Nc1m4B0xcANpOIny8I",
+      "filename": "Blackmailing The Nanny 3 Streaming Video On Demand Adult Empire.mp4",
+      "target_folder": "adultdvdempire 1",
+      "file_id": "kUU0wQ6Q",
+      "total_size": 5630307273,
+      "total_chunks": 2,
+      "chunks": [
+        {
+          "index": 1,
+          "start_byte": 0,
+          "end_byte": 5261334937,
+          "expected_size": 5261334938,
+          "status": "pending",
+          "artifact_name": "ck_kuu0wq6q_01"
+        },
+        {
+          "index": 2,
+          "start_byte": 5261334938,
+          "end_byte": 5630307272,
+          "expected_size": 368972335,
+          "status": "pending",
+          "artifact_name": "ck_kuu0wq6q_02"
+        }
+      ],
+      "status": "pending",
+      "gdrive_status": "pending"
     }
   ],
   "current_index": 3,
   "version": 2,
   "summary": {
-    "total": 3,
-    "gdrive_uploaded": 1,
+    "total": 6,
+    "gdrive_uploaded": 0,
     "concat_ready": 0,
-    "downloading": 2,
-    "pending": 0,
+    "downloading": 4,
+    "pending": 2,
     "status": "in_progress"
   }
 }
