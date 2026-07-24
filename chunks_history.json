@@ -115,7 +115,7 @@
           "artifact_name": "ck_kuu0wq6q_02"
         }
       ],
-      "status": "pending",
+      "status": "downloading",
       "gdrive_status": "pending"
     },
     {
@@ -181,8 +181,8 @@
     "total": 6,
     "gdrive_uploaded": 0,
     "concat_ready": 0,
-    "downloading": 3,
-    "pending": 3,
+    "downloading": 4,
+    "pending": 2,
     "status": "in_progress"
   }
 }
