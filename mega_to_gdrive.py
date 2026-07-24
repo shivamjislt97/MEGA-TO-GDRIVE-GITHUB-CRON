@@ -11,7 +11,6 @@ import threading
 import time
 from datetime import datetime, timezone
 
-MEGA_LINKS_RAW = os.environ.get("MEGA_LINKS", "")
 RCLONE_CONF_RAW = os.environ.get("RCLONE_CONF", "")
 
 GDRIVE_REMOTE = "gdrive"
@@ -21,6 +20,7 @@ QUOTA_MARKERS = ["over quota", "bandwidth limit", "quota exceeded", "429", "eove
 
 WORKSPACE = os.environ.get("GITHUB_WORKSPACE", os.getcwd())
 COMPLETED_FILE = os.path.join(WORKSPACE, "completed_links.json")
+LINKS_FILE = os.path.join(WORKSPACE, "all_folders.json")
 TEMP_DIR = os.path.join(WORKSPACE, "mega_temp")
 MAX_RETRIES = 3
 
@@ -207,7 +207,16 @@ def upload_file(filepath, folder_name, quota_used=0, quota_max=0):
     file_size = os.path.getsize(filepath)
 
     process = subprocess.Popen(
-        ["rclone", "copy", filepath, target, "--stats=3s", "--stats-one-line"],
+        [
+            "rclone", "copy", filepath, target,
+            "--multi-thread-streams=8",
+            "--drive-chunk-size=256M",
+            "--transfers=8",
+            "--buffer-size=256M",
+            "--drive-upload-cutoff=50M",
+            "--no-check-dest",
+            "--stats=3s", "--stats-one-line",
+        ],
         stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
         text=True, bufsize=1
     )
@@ -334,6 +343,39 @@ def cleanup_gdrive_temps():
         pass
 
 
+def load_mega_links():
+    if os.path.exists(LINKS_FILE):
+        with open(LINKS_FILE) as f:
+            data = json.load(f)
+        if isinstance(data, dict) and data:
+            total = sum(len(v) for v in data.values())
+            log(f"  Loaded: all_folders.json ({len(data)} folders, {total} files)")
+            return data
+        log("  all_folders.json empty, trying fallback...")
+    mp = os.path.join(WORKSPACE, "MEGA_LINKS_merged.json")
+    if os.path.exists(mp):
+        with open(mp) as f:
+            data = json.load(f)
+        if isinstance(data, dict) and data:
+            log(f"  Loaded: MEGA_LINKS_merged.json ({len(data)} folders)")
+            return data
+    merged = {}
+    for fn in sorted(os.listdir(WORKSPACE)):
+        if re.match(r'all_folders_\d+\.json$', fn):
+            with open(os.path.join(WORKSPACE, fn)) as f:
+                for k, v in json.load(f).items():
+                    merged.setdefault(k, []).extend(v)
+    if merged:
+        log(f"  Loaded: {len(merged)} folders from split all_folders_*.json")
+        return merged
+    raw = os.environ.get("MEGA_LINKS", "").strip()
+    if raw:
+        data = json.loads(raw)
+        log(f"  Loaded: MEGA_LINKS env var ({len(data)} folders)")
+        return data
+    raise ValueError("No MEGA links found")
+
+
 def main():
     # Setup rclone config
     conf_dir = os.path.expanduser("~/.config/rclone")
@@ -360,20 +402,14 @@ def main():
     oversized_raw = state.get("oversized", [])
     oversized = oversized_raw.get("items", []) if isinstance(oversized_raw, dict) else oversized_raw
 
-    # Parse MEGA_LINKS JSON
-    if not MEGA_LINKS_RAW.strip():
-        log("ERROR: MEGA_LINKS secret is empty")
-        sys.exit(1)
-
+    # Load MEGA links from all_folders.json (or fallback chain)
     try:
-        all_links = json.loads(MEGA_LINKS_RAW)
-    except json.JSONDecodeError as e:
-        log(f"ERROR: MEGA_LINKS is not valid JSON: {e}")
-        log("   Expected: {\"FolderName\": [\"url1\", \"url2\"]}")
+        all_links = load_mega_links()
+    except (ValueError, json.JSONDecodeError) as e:
+        log(f"ERROR: Failed to load MEGA links: {e}")
         sys.exit(1)
-
     if not isinstance(all_links, dict):
-        log("ERROR: MEGA_LINKS must be a JSON object {\"folder\": [urls]}")
+        log("ERROR: MEGA links must be a JSON object {\"folder\": [urls]}")
         sys.exit(1)
 
     # STATE MIGRATION: Move old oversized items to completed list with status="unupload"

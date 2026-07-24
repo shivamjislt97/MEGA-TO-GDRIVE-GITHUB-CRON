@@ -51,7 +51,6 @@ jobs:
 
       - name: Run transfer
         env:
-          MEGA_LINKS: ${{ secrets.MEGA_LINKS }}
           RCLONE_CONF: ${{ secrets.RCLONE_CONF }}
         run: python mega_to_gdrive.py
 

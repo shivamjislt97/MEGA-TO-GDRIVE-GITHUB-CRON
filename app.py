@@ -145,7 +145,7 @@ async def rclone_connect():
     async with httpx.AsyncClient() as c:
         r = await c.post("https://oauth2.googleapis.com/device/code", data={
             "client_id": RCLONE_PUBLIC_CLIENT_ID,
-            "scope": "https://www.googleapis.com/auth/drive.file"
+            "scope": "https://www.googleapis.com/auth/drive"
         })
         data = r.json()
         if "error" in data:
@@ -170,7 +170,10 @@ async def rclone_check():
             RCLONE_AUTH_STATE.clear()
             conf = f"""[gdrive]
 type = drive
-scope = drive.file
+scope = drive
+client_id = YOUR_CUSTOM_CLIENT_ID
+client_secret = YOUR_CUSTOM_CLIENT_SECRET
+chunk_size = 256M
 token = {{\\"access_token\\":\\"{data['access_token']}\\",\\"token_type\\":\\"Bearer\\",\\"refresh_token\\":\\"{data.get('refresh_token', '')}\\"}}
 root_folder_id =
 """
@@ -215,7 +218,7 @@ async def google_device_start(client_id):
     async with httpx.AsyncClient() as c:
         r = await c.post("https://oauth2.googleapis.com/device/code", data={
             "client_id": client_id,
-            "scope": "https://www.googleapis.com/auth/drive.file"
+            "scope": "https://www.googleapis.com/auth/drive"
         })
         data = r.json()
         if "error" in data:
@@ -254,7 +257,10 @@ async def google_device_check(client_id, client_secret):
 def generate_rclone_conf(access_token, refresh_token):
     conf = f"""[gdrive]
 type = drive
-scope = drive.file
+scope = drive
+client_id = YOUR_CUSTOM_CLIENT_ID
+client_secret = YOUR_CUSTOM_CLIENT_SECRET
+chunk_size = 256M
 token = {{\\"access_token\\":\\"{access_token}\\",\\"token_type\\":\\"Bearer\\",\\"refresh_token\\":\\"{refresh_token}\\"}}
 root_folder_id =
 """
@@ -431,6 +437,8 @@ async def generate_secret():
     secret = json.dumps(folders, indent=2)
     st["mega_links_json"] = secret
     save_state(st)
+    with open(DATA_DIR / "all_folders.json", "w") as f:
+        json.dump(folders, f, separators=(',', ':'))
     return {"secret": secret, "folders": list(folders.keys())}
 
 # Google Drive auth
